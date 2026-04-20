@@ -105,3 +105,52 @@
 - 配置 `origin` 指向 `https://github.com/Jasvina/TurnScope.git`
 - 创建符合 Lore protocol 的提交
 - 推送 `main` 到 GitHub 并验证远端可见
+
+================================================================
+
+时间：04月21日00时00分
+工作类型：GitHub 发布完成 + 记录补全
+
+计划：
+- 完成首个 Lore 提交并推送到 GitHub。
+- 验证本地分支已经与远端 `origin/main` 建立跟踪关系。
+- 把“上传成功”的结果补写回 `codex_work`，保持仓库内记录闭环。
+
+执行：
+- 创建了首个 Lore protocol 提交，提交标题为：
+  - `Make TurnScope's launch thesis clear to early contributors`
+- 提交包含文件：
+  - `README.md`
+  - `codex_work`
+  - `docs/assets/turnscope-hero.svg`
+  - `docs/assets/turnscope-panels.svg`
+- 将远端地址设置为：
+  - `git@github.com:Jasvina/TurnScope.git`
+- 初次使用 HTTPS 推送时遇到本机凭证读取失败，随后检查认证链路，确认：
+  - `gh auth status` 显示 GitHub 账号 `Jasvina` 已登录
+  - SSH 到 GitHub 认证成功
+- 之后改用 SSH 远端并成功执行：
+  - `git push -u origin main`
+
+结果：
+- TurnScope 的首版 README、配图和工作记录已经成功上传到 GitHub。
+- 当前本地分支 `main` 已与 `origin/main` 建立跟踪关系。
+- 当前首个有效提交短哈希为：
+  - `239f5ce`
+
+验证：
+- 推送命令返回成功，显示：
+  - `[new branch] main -> main`
+  - `branch 'main' set up to track 'origin/main'`
+- 本地状态显示：
+  - `## main...origin/main`
+
+风险 / 未决问题：
+- 本次验证主要基于 git 推送成功回执与本地跟踪状态，尚未额外检查 GitHub 网页端的最终展示效果。
+- README 虽然已经上线，但后续仍需要补更多承接贡献者的仓库基础设施。
+
+下一步计划：
+- 补 `docs/specs/v0.1-architecture.md`
+- 搭第一版代码骨架
+- 补开源基础文件（如 `LICENSE`、`CONTRIBUTING.md`、issue templates）
+- 每完成一轮工作后，继续同步更新本文件
