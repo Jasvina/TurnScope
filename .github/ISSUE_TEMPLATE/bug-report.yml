@@ -1,0 +1,53 @@
+name: Bug report
+description: Report a bug in the collector, schema, docs, or web prototype
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What broke, and where did you see it?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: List the smallest sequence that reproduces the problem.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - collector
+        - web
+        - schema
+        - adapters
+        - docs
+    validations:
+      required: true
+  - type: textarea
+    id: trace
+    attributes:
+      label: Sample event or trace snippet
+      description: Paste a redacted snippet if it helps.

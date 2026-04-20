@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TurnScope Prototype</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="grain"></div>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="kicker">Local-first coding-agent observability</p>
+          <h1>TurnScope Prototype</h1>
+          <p class="lede">
+            A paper-and-steel dashboard for reading sessions, tool calls, shell trees,
+            file diffs, approvals, and subagent hops without losing the plot.
+          </p>
+        </div>
+        <div class="hero-badge">
+          <span>v0.1 shape</span>
+          <strong>Timeline + Process + Diff + Graph</strong>
+        </div>
+      </header>
+
+      <section class="stats" id="stats"></section>
+
+      <section class="board">
+        <article class="panel ingest-panel">
+          <div class="panel-head">
+            <h2>Ingest Console</h2>
+            <div class="actions">
+              <button id="load-sample">Load sample</button>
+              <button id="render-input">Render input</button>
+            </div>
+          </div>
+          <textarea id="event-input" spellcheck="false"></textarea>
+          <p class="hint">Paste NDJSON events here. The prototype derives timeline, shell, diff, and subagent views in-browser.</p>
+        </article>
+
+        <article class="panel timeline-panel">
+          <div class="panel-head">
+            <h2>Timeline</h2>
+            <span id="timeline-label">0 events</span>
+          </div>
+          <div class="timeline" id="timeline"></div>
+        </article>
+
+        <article class="panel process-panel">
+          <div class="panel-head">
+            <h2>Shell Process Tree</h2>
+            <span>Command lineage</span>
+          </div>
+          <div class="process-tree" id="process-tree"></div>
+        </article>
+
+        <article class="panel diff-panel">
+          <div class="panel-head">
+            <h2>Diff Timeline</h2>
+            <span>Turn-by-turn file evidence</span>
+          </div>
+          <div class="diff-list" id="diff-list"></div>
+        </article>
+
+        <article class="panel graph-panel">
+          <div class="panel-head">
+            <h2>Subagent Graph</h2>
+            <span>Delegation map</span>
+          </div>
+          <div class="agent-graph" id="agent-graph"></div>
+        </article>
+
+        <article class="panel raw-panel">
+          <div class="panel-head">
+            <h2>Raw Event Lens</h2>
+            <span>First canonical event</span>
+          </div>
+          <pre id="raw-view"></pre>
+        </article>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

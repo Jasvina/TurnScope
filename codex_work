@@ -154,3 +154,96 @@
 - 搭第一版代码骨架
 - 补开源基础文件（如 `LICENSE`、`CONTRIBUTING.md`、issue templates）
 - 每完成一轮工作后，继续同步更新本文件
+
+================================================================
+
+时间：04月21日00时18分
+工作类型：架构落地 + 代码骨架 + 开源基础设施 + 验证
+
+计划：
+- 把上一个阶段的“方向”和 README 宣言，推进到可执行的仓库骨架。
+- 补一份能指导后续实现的 v0.1 架构文档。
+- 产出最小但真实可用的 collector、schema、web prototype 和开源协作文件。
+- 验证这些新文件至少能在本地通过静态和脚本级检查。
+
+执行：
+- 新增架构文档：
+  - `docs/specs/v0.1-architecture.md`
+  - 内容覆盖：目标、非目标、组件边界、canonical event envelope、事件 taxonomy、存储策略、数据流、v0.1 验收标准、开放问题。
+- 新增 schema 包：
+  - `packages/schema/README.md`
+  - `packages/schema/turnscope-event.schema.json`
+  - `packages/schema/examples/minimal-session.ndjson`
+  - `packages/schema/examples/subagent-branch.ndjson`
+- 新增 runtime adapter 占位说明：
+  - `packages/adapters-codex/README.md`
+  - `packages/adapters-openclaw/README.md`
+- 新增 replay / exporter 占位包说明：
+  - `packages/exporters/README.md`
+  - `packages/replay/README.md`
+- 新增 collector 原型：
+  - `apps/collector/README.md`
+  - `apps/collector/src/collector.py`
+  - 功能：读取 NDJSON 或 JSON array，验证最小字段，按 `session_id` 写入 append-only session log，并生成 summary sidecar。
+- 新增 web 原型：
+  - `apps/web/README.md`
+  - `apps/web/index.html`
+  - `apps/web/styles.css`
+  - `apps/web/app.js`
+  - 特点：零依赖静态页面、可直接粘贴 NDJSON、可在浏览器中派生 timeline / shell tree / diff / subagent graph 视图。
+- 新增开源协作基础设施：
+  - `LICENSE`
+  - `CONTRIBUTING.md`
+  - `.github/ISSUE_TEMPLATE/bug-report.yml`
+  - `.github/ISSUE_TEMPLATE/feature-request.yml`
+  - `.github/ISSUE_TEMPLATE/runtime-adapter-request.yml`
+  - `.github/ISSUE_TEMPLATE/config.yml`
+  - `.gitignore`
+- 更新 `README.md`：
+  - 加入 MIT license badge
+  - 加入 “Prototype today” 章节
+  - 把 roadmap 的一部分状态从纯设想更新为已落地 bootstrap
+  - 将仓库从“纯 thesis”更新为“有小型 working scaffold 的 pre-alpha 项目”
+
+结果：
+- TurnScope 已经不再只是一个概念仓库，而是进入了可继续迭代的 bootstrap 阶段。
+- 现在仓库已经同时具备：
+  - 对外叙事层：`README.md`
+  - 架构层：`docs/specs/v0.1-architecture.md`
+  - 契约层：`packages/schema/turnscope-event.schema.json`
+  - 数据层样例：`packages/schema/examples/*.ndjson`
+  - 本地采集层：`apps/collector/src/collector.py`
+  - 前端原型层：`apps/web/*`
+  - 开源协作层：`LICENSE`、`CONTRIBUTING.md`、issue templates
+- 后续任何新 AI 接手，都能在仓库内部直接找到“为什么做、怎么做、当前做到哪、下一步做什么”。
+
+验证：
+- 运行 collector 成功：
+  - 输入：`packages/schema/examples/minimal-session.ndjson`
+  - 输出：
+    - `apps/collector/data/sessions/sess_demo.ndjson`
+    - `apps/collector/data/sessions/sess_demo.summary.json`
+- 校验通过：
+  - `packages/schema/turnscope-event.schema.json` 可被 JSON 成功解析
+  - 两个 sample NDJSON 文件逐行 JSON 解析成功
+  - `python3 -m py_compile apps/collector/src/collector.py` 通过
+  - `node --check apps/web/app.js` 通过
+- 附加检查：
+  - `README.md` 已提及关键新文件：architecture doc、schema、collector、`CONTRIBUTING.md`、`codex_work`
+- 附加说明：
+  - 当前 sandbox 不允许绑定本地 HTTP 端口，因此未能在此环境完成浏览器级端口验证
+
+风险 / 未决问题：
+- `apps/web` 目前仍是静态 prototype，还没有真正读取 collector 输出的本地 API 或文件索引。
+- adapter 目录当前还是 contract / mapping 占位，尚未开始真正对接 Codex 或 OpenClaw 的事件源。
+- schema 目前是 v0.1 草案，还未经历真实 runtime trace 的逆向校准。
+
+下一步计划：
+- 实现第一个真实 adapter，优先建议 `packages/adapters-codex`
+- 让 `apps/web` 读取本地 collector 输出，而不是只靠内嵌 sample 数据
+- 为 `apps/collector` 增加更清晰的 session index 文件与 dropped-event 统计
+- 补一份 event mapping 文档，把 runtime-native event names 对齐到 canonical types
+- 如需增强开源承接能力，可继续补：
+  - `.github/pull_request_template.md`
+  - `SECURITY.md`
+  - `docs/specs/adapter-mapping-codex.md`

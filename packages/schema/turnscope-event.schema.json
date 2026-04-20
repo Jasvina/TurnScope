@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://turnscope.dev/schema/turnscope-event.schema.json",
+  "title": "TurnScope Event",
+  "type": "object",
+  "required": [
+    "version",
+    "id",
+    "type",
+    "occurred_at",
+    "session_id",
+    "source",
+    "payload"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "session.started",
+        "session.finished",
+        "turn.started",
+        "turn.finished",
+        "tool.called",
+        "tool.finished",
+        "shell.started",
+        "shell.output",
+        "shell.finished",
+        "file.changed",
+        "approval.requested",
+        "approval.resolved",
+        "subagent.spawned",
+        "error.raised"
+      ]
+    },
+    "occurred_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "session_id": {
+      "type": "string"
+    },
+    "turn_id": {
+      "type": ["string", "null"]
+    },
+    "agent_id": {
+      "type": ["string", "null"]
+    },
+    "parent_id": {
+      "type": ["string", "null"]
+    },
+    "source": {
+      "type": "object",
+      "required": ["runtime", "component", "origin"],
+      "properties": {
+        "runtime": {
+          "type": "string"
+        },
+        "component": {
+          "type": "string"
+        },
+        "origin": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "payload": {
+      "type": "object"
+    },
+    "attributes": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

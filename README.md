@@ -4,6 +4,7 @@
 ![Focus](https://img.shields.io/badge/focus-coding%20agent%20observability-2563eb)
 ![Architecture](https://img.shields.io/badge/architecture-local--first-0f766e)
 ![Runtime](https://img.shields.io/badge/runtime-cross--runtime-7c3aed)
+![License](https://img.shields.io/badge/license-MIT-111111)
 
 <p align="center">
   <img src="docs/assets/turnscope-hero.svg" alt="TurnScope hero graphic showing session timeline, tool calls, shell processes, file diffs, and subagent graph" width="100%" />
@@ -95,6 +96,28 @@ flowchart LR
 - **Adapter-driven**: TurnScope should work by ingesting events, not by replacing the runtime
 - **Open schema**: events should be inspectable, exportable, and easy to extend
 
+## Prototype today
+
+The repo now includes a zero-dependency bootstrap path for the first milestone:
+
+- `docs/specs/v0.1-architecture.md` defines the system boundary and MVP
+- `packages/schema/turnscope-event.schema.json` defines the initial event envelope
+- `apps/collector/src/collector.py` ingests sample NDJSON into local session files
+- `apps/web/` contains a static prototype dashboard with timeline, diff, shell, and subagent views
+
+Try the current prototype:
+
+```bash
+python3 apps/collector/src/collector.py \
+  --input packages/schema/examples/minimal-session.ndjson \
+  --outdir apps/collector/data
+
+cd apps/web
+python3 -m http.server 4173
+```
+
+Then open `http://localhost:4173`.
+
 ## Why not use existing tools?
 
 | Option | Good at | Gap for coding agents | TurnScope focus |
@@ -106,7 +129,7 @@ flowchart LR
 
 ## First milestone
 
-TurnScope is currently in the **design and bootstrap phase**. The first milestone should be small, sharp, and demoable.
+TurnScope is currently in the **bootstrap implementation phase**. The first milestone should stay small, sharp, and demoable.
 
 ### v0.1 goals
 
@@ -173,10 +196,10 @@ If we can deliver that experience, this project will feel real immediately.
 
 ### Now
 
-- [ ] define the event schema
-- [ ] write the v0.1 architecture note
-- [ ] build a tiny collector that stores sessions locally
-- [ ] design the first UI around timeline plus process tree plus diff
+- [x] define the initial event schema
+- [x] write the v0.1 architecture note
+- [x] build a tiny collector that stores sessions locally
+- [x] design the first zero-dependency UI around timeline plus process tree plus diff
 - [ ] land the first runtime adapter
 
 ### Next
@@ -223,10 +246,16 @@ If this space is interesting to you, open an issue with one of these angles:
 - an event schema idea we should preserve from day one
 - a UI concept for making long agent runs understandable
 
+Start with:
+
+- `CONTRIBUTING.md`
+- `docs/specs/v0.1-architecture.md`
+- `codex_work`
+
 ## Project status
 
-This repository is currently a product thesis plus bootstrap scaffold.
+This repository is currently a product thesis plus a small working scaffold.
 
-The immediate goal is not to look finished. The immediate goal is to make the direction obvious, compelling, and easy for contributors to join.
+The immediate goal is not to look finished. The immediate goal is to make the direction obvious, buildable, and easy for contributors to join.
 
 If that resonates, star the repo, open an issue, and help define the first real build.

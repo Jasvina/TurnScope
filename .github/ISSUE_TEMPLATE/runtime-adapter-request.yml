@@ -1,0 +1,35 @@
+name: Runtime adapter request
+description: Request support for a new coding-agent runtime
+title: "[Adapter] "
+labels:
+  - adapter
+body:
+  - type: input
+    id: runtime
+    attributes:
+      label: Runtime name
+      placeholder: Codex, OpenClaw, Claude Code, Gemini CLI, custom runtime
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this runtime matters
+      description: Why should TurnScope prioritize this integration?
+    validations:
+      required: true
+  - type: textarea
+    id: events
+    attributes:
+      label: Event sources available
+      description: Link docs or describe whether the runtime exposes logs, JSON-RPC, WebSocket, traces, or local files.
+  - type: textarea
+    id: shape
+    attributes:
+      label: Example event shape
+      description: Paste a sample event if you have one.
+  - type: textarea
+    id: constraints
+    attributes:
+      label: Constraints or risks
+      description: Authentication, transport, licensing, missing ids, unstable event names, and so on.
