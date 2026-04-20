@@ -1,0 +1,40 @@
+<svg width="1280" height="760" viewBox="0 0 1280 760" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="760" rx="28" fill="#F8FAFC"/>
+  <text x="64" y="92" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="700">The four views that make a run understandable</text>
+  <text x="64" y="130" fill="#475569" font-family="Arial, Helvetica, sans-serif" font-size="20">The first version of TurnScope should make each of these feel obvious in seconds.</text>
+
+  <rect x="64" y="176" width="552" height="248" rx="22" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <text x="96" y="218" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">1. Timeline</text>
+  <rect x="96" y="252" width="460" height="26" rx="8" fill="#DBEAFE"/>
+  <rect x="96" y="292" width="344" height="26" rx="8" fill="#D1FAE5"/>
+  <rect x="96" y="332" width="410" height="26" rx="8" fill="#EDE9FE"/>
+  <rect x="96" y="372" width="280" height="26" rx="8" fill="#FEE2E2"/>
+  <text x="98" y="236" fill="#475569" font-family="Arial, Helvetica, sans-serif" font-size="16">turns, tools, approvals, latency spikes</text>
+
+  <rect x="664" y="176" width="552" height="248" rx="22" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <text x="696" y="218" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">2. Process Tree</text>
+  <text x="706" y="266" fill="#0F172A" font-family="Courier New, monospace" font-size="18">agent run</text>
+  <text x="730" y="300" fill="#334155" font-family="Courier New, monospace" font-size="18">├─ search docs</text>
+  <text x="730" y="334" fill="#334155" font-family="Courier New, monospace" font-size="18">├─ run tests</text>
+  <text x="730" y="368" fill="#334155" font-family="Courier New, monospace" font-size="18">└─ spawn verifier</text>
+
+  <rect x="64" y="464" width="552" height="248" rx="22" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <text x="96" y="506" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">3. Diff View</text>
+  <rect x="96" y="536" width="228" height="128" rx="12" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <rect x="354" y="536" width="228" height="128" rx="12" fill="#F8FAFC" stroke="#E2E8F0"/>
+  <text x="118" y="570" fill="#059669" font-family="Courier New, monospace" font-size="16">+ add adapter contract</text>
+  <text x="118" y="602" fill="#059669" font-family="Courier New, monospace" font-size="16">+ record shell.start</text>
+  <text x="376" y="570" fill="#DC2626" font-family="Courier New, monospace" font-size="16">- vague status note</text>
+  <text x="376" y="602" fill="#DC2626" font-family="Courier New, monospace" font-size="16">- duplicate event names</text>
+
+  <rect x="664" y="464" width="552" height="248" rx="22" fill="#FFFFFF" stroke="#E2E8F0"/>
+  <text x="696" y="506" fill="#0F172A" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700">4. Agent Graph</text>
+  <circle cx="920" cy="612" r="34" fill="#DBEAFE" stroke="#2563EB" stroke-width="3"/>
+  <circle cx="808" cy="662" r="30" fill="#D1FAE5" stroke="#0F766E" stroke-width="3"/>
+  <circle cx="1032" cy="662" r="30" fill="#EDE9FE" stroke="#7C3AED" stroke-width="3"/>
+  <line x1="894" y1="626" x2="834" y2="651" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="946" y1="626" x2="1006" y2="651" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+  <text x="892" y="616" fill="#1D4ED8" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">lead</text>
+  <text x="784" y="667" fill="#047857" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700">explore</text>
+  <text x="1010" y="667" fill="#6D28D9" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700">verify</text>
+</svg>

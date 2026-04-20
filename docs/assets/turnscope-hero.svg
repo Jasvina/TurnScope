@@ -1,0 +1,49 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="720" rx="28" fill="#F7F7F2"/>
+  <rect x="32" y="32" width="1216" height="656" rx="24" fill="#FFFFFF" stroke="#D8D8D0"/>
+  <text x="80" y="118" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="700">See the invisible life of coding agents</text>
+  <text x="80" y="160" fill="#4B5563" font-family="Arial, Helvetica, sans-serif" font-size="22">One timeline for turns, tools, shell processes, file diffs, approvals, and subagents.</text>
+
+  <rect x="80" y="214" width="340" height="414" rx="18" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="108" y="252" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Session Timeline</text>
+  <line x1="132" y1="292" x2="132" y2="590" stroke="#CBD5E1" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="132" cy="322" r="10" fill="#2563EB"/>
+  <circle cx="132" cy="392" r="10" fill="#0F766E"/>
+  <circle cx="132" cy="466" r="10" fill="#7C3AED"/>
+  <circle cx="132" cy="540" r="10" fill="#DC2626"/>
+  <rect x="162" y="300" width="216" height="42" rx="10" fill="#DBEAFE"/>
+  <text x="178" y="327" fill="#1D4ED8" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">turn.started</text>
+  <rect x="162" y="370" width="184" height="42" rx="10" fill="#D1FAE5"/>
+  <text x="178" y="397" fill="#047857" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">tool.called</text>
+  <rect x="162" y="444" width="194" height="42" rx="10" fill="#EDE9FE"/>
+  <text x="178" y="471" fill="#6D28D9" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">file.changed</text>
+  <rect x="162" y="518" width="210" height="42" rx="10" fill="#FEE2E2"/>
+  <text x="178" y="545" fill="#B91C1C" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">approval.wait</text>
+
+  <rect x="456" y="214" width="344" height="194" rx="18" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="484" y="252" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Shell Process Tree</text>
+  <text x="492" y="300" fill="#111827" font-family="Courier New, monospace" font-size="18">codex exec</text>
+  <text x="520" y="332" fill="#374151" font-family="Courier New, monospace" font-size="18">├─ rg --files</text>
+  <text x="520" y="364" fill="#374151" font-family="Courier New, monospace" font-size="18">├─ pytest tests/ui</text>
+  <text x="520" y="396" fill="#374151" font-family="Courier New, monospace" font-size="18">└─ npm run dev</text>
+
+  <rect x="456" y="434" width="344" height="194" rx="18" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="484" y="472" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Diff Timeline</text>
+  <rect x="492" y="500" width="268" height="94" rx="12" fill="#FFFFFF" stroke="#E5E7EB"/>
+  <text x="512" y="530" fill="#111827" font-family="Courier New, monospace" font-size="17">README.md</text>
+  <text x="512" y="560" fill="#059669" font-family="Courier New, monospace" font-size="16">+ add timeline section</text>
+  <text x="512" y="586" fill="#DC2626" font-family="Courier New, monospace" font-size="16">- remove vague TODO</text>
+
+  <rect x="836" y="214" width="364" height="414" rx="18" fill="#F9FAFB" stroke="#E5E7EB"/>
+  <text x="864" y="252" fill="#111827" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700">Subagent Graph</text>
+  <circle cx="1018" cy="326" r="42" fill="#DBEAFE" stroke="#2563EB" stroke-width="3"/>
+  <text x="988" y="332" fill="#1D4ED8" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">leader</text>
+  <circle cx="922" cy="460" r="38" fill="#D1FAE5" stroke="#0F766E" stroke-width="3"/>
+  <text x="892" y="466" fill="#047857" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">explore</text>
+  <circle cx="1116" cy="460" r="38" fill="#EDE9FE" stroke="#7C3AED" stroke-width="3"/>
+  <text x="1088" y="466" fill="#6D28D9" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">verify</text>
+  <line x1="992" y1="362" x2="944" y2="422" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="1044" y1="362" x2="1092" y2="422" stroke="#94A3B8" stroke-width="4" stroke-linecap="round"/>
+  <rect x="876" y="532" width="284" height="56" rx="12" fill="#FFF7ED" stroke="#FDBA74"/>
+  <text x="896" y="566" fill="#C2410C" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">approval.requested -> waiting</text>
+</svg>

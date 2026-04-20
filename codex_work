@@ -1,0 +1,107 @@
+本文件 `codex_work` 是 TurnScope 仓库的连续工作记录。后续无论是哪一个 Codex、AI 代理，凡是在本仓库内开展工作，都应把“计划 + 执行 + 结果 + 验证 + 风险 + 下一步计划”优先追加到这个文件里，而不是只留在聊天上下文中。目标是让一个完全没有历史上下文的新 AI，仅通过阅读本文件，就能快速理解：这个项目为什么存在、已经做了什么、当前卡在哪里、下一步最应该做什么。
+
+建议后续记录格式保持稳定：
+- 时间：xx月xx日xx时xx分
+- 工作类型：研究 / 文档 / 架构 / 实现 / 验证 / 修复
+- 计划：
+- 执行：
+- 结果：
+- 验证：
+- 风险 / 未决问题：
+- 下一步计划：
+
+================================================================
+
+时间：04月20日23时35分
+工作类型：项目研究 + README 首版撰写 + 仓库工作流约束落盘
+
+计划：
+- 调研 TurnScope 这个方向是否值得做，明确它与 Codex、OpenClaw、LLM tracing 平台的差异化定位。
+- 在本地仓库里产出一版适合开源首发的 README，让项目价值、范围、路线图和贡献入口足够清晰。
+- 为后续 AI 协作建立一个持久工作记录文件，避免上下文丢失。
+
+执行：
+- 对 coding-agent 可视化 / 可观测性方向做了产品级定位思考，结论是：TurnScope 最佳定位不是“再做一个 agent IDE”，而是“面向 coding agents 的 local-first observability + replay layer”。
+- 收敛出核心产品定义：统一展示 session timeline、tool calls、shell process tree、file diff timeline、approval lane、subagent graph、model/cost lane、replay mode。
+- 在 `/Users/jasvina/jasvina_github/TurnScope/README.md` 写了首版 README，采用“项目宣言 + 架构图 + 里程碑 + 路线图”的结构。
+- 新增两张 README 配图：
+  - `docs/assets/turnscope-hero.svg`
+  - `docs/assets/turnscope-panels.svg`
+- README 中明确了：
+  - 项目一句话定位：`Local-first observability and replay for coding agents.`
+  - v0.1 目标范围
+  - 初版事件类型
+  - 建议的 monorepo 目录结构
+  - 贡献者最值得切入的方向
+- 根据用户新要求，在仓库根目录创建本文件 `codex_work`，用于持续记录所有计划、执行、结果与下一步。
+
+结果：
+- TurnScope 已经有一版可直接放到 GitHub 首页展示的 README 初稿，不再只是一个空仓库名字。
+- 项目的差异化叙事已经比较清晰：不是与 Codex/OpenClaw 正面竞争运行器，而是补“运行过程可视化、可追踪、可回放”的透明度层。
+- 当前仓库里已具备最基础的“对外叙事资产”：
+  - `README.md`
+  - `docs/assets/turnscope-hero.svg`
+  - `docs/assets/turnscope-panels.svg`
+  - `codex_work`
+
+验证：
+- 已检查 `README.md` 存在且内容完整。
+- 已检查两张 SVG 文件存在，README 中引用路径有效。
+- 已确认当前本地工作区路径为：`/Users/jasvina/jasvina_github/TurnScope`
+
+风险 / 未决问题：
+- 当前本地仓库处于 `No commits yet on main` 状态，说明本地 checkout 没有成功拿到一个可验证的远端提交历史；后续在正式提交前，需要先确认本地与 GitHub 远端仓库状态一致。
+- 目前只有文档和示意图，尚未开始代码骨架与事件 schema 的实际实现。
+- README 里描述的是清晰方向，但还没有配套的 `LICENSE`、`CONTRIBUTING.md`、issue templates、架构文档、代码目录骨架去承接外部贡献。
+
+下一步计划：
+- 优先补一份 `docs/specs/v0.1-architecture.md`，把 collector、schema、adapters、web UI 的边界先定下来。
+- 同步搭第一版代码骨架，建议从这些目录开始：
+  - `apps/web`
+  - `apps/collector`
+  - `packages/schema`
+  - `packages/adapters-codex`
+  - `packages/adapters-openclaw`
+- 补开源协作基础设施：
+  - `LICENSE`
+  - `CONTRIBUTING.md`
+  - `.github/ISSUE_TEMPLATE/`
+  - `docs/specs/`
+- 在每次后续编辑结束后，继续把变更摘要、验证结论和下一步写回本文件，保证新 AI 接手时不依赖对话历史。
+
+================================================================
+
+时间：04月20日23时39分
+工作类型：发布准备 + GitHub 上传
+
+计划：
+- 检查本地仓库与远端仓库状态，确认能否直接提交并推送。
+- 把当前 README、配图和 `codex_work` 一并纳入版本控制。
+- 按 Lore commit protocol 创建首个有意义的提交，并上传到 GitHub。
+
+执行：
+- 检查了 `/Users/jasvina/jasvina_github/TurnScope` 的 git 状态，确认当前待提交文件为：
+  - `README.md`
+  - `codex_work`
+  - `docs/assets/turnscope-hero.svg`
+  - `docs/assets/turnscope-panels.svg`
+- 检查了当前分支为 `main`。
+- 检查远端状态，发现本地仓库尚未配置 `origin`，且 GitHub 远端当前可视为未同步内容，需要由本地首次推送建立可见项目内容。
+- 将本��“上传 GitHub”的计划与执行记录追加到本文件，确保后续 AI 接手时能看到发布脉络。
+
+结果：
+- 当前仓库已处于可提交状态。
+- 下一步就是配置远端、创建 Lore 格式提交并执行首次推送。
+
+验证：
+- 已核对本地待提交文件列表。
+- 已核对当前分支名称为 `main`。
+
+风险 / 未决问题：
+- 若远端仓库已有隐藏或未同步的提交，推送时可能需要先拉取或人工处理分支关系。
+- 当前尚未验证 GitHub 认证链路是否可直接推送成功。
+
+下一步计划：
+- 配置 `origin` 指向 `https://github.com/Jasvina/TurnScope.git`
+- 创建符合 Lore protocol 的提交
+- 推送 `main` 到 GitHub 并验证远端可见
