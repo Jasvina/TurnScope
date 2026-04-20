@@ -247,3 +247,47 @@
   - `.github/pull_request_template.md`
   - `SECURITY.md`
   - `docs/specs/adapter-mapping-codex.md`
+
+================================================================
+
+时间：04月21日00时22分
+工作类型：提交与发布同步
+
+计划：
+- 把本轮架构、骨架和协作基础设施提交到仓库历史。
+- 将最新变更推送到 GitHub，确保远端与本地一致。
+- 记录本次提交和推送结果，避免后续 AI 误判“改动只在本地”。
+
+执行：
+- 创建 Lore protocol 提交：
+  - `Turn TurnScope into a buildable bootstrap instead of a pure thesis`
+- 本次提交包含：
+  - v0.1 架构文档
+  - schema 与 sample traces
+  - collector 原型
+  - web prototype
+  - LICENSE / CONTRIBUTING / issue templates / .gitignore
+  - README 更新
+  - 本文件 `codex_work` 更新
+- 成功推送到 GitHub：
+  - `origin/main`
+
+结果：
+- 当前仓库已经把“概念 README 仓库”推进为“有架构、有 contract、有原型、有开源协作面的 bootstrap 仓库”。
+- 最新���交短哈希为：
+  - `6b62d77`
+
+验证：
+- 推送成功回执：
+  - `e48069a..6b62d77  main -> main`
+- 当前本地状态：
+  - `## main...origin/main`
+
+风险 / 未决问题：
+- Git 历史中的提交者名字和邮箱仍是本机自动推断值，若后续需要更规范的作者信息，可再配置 `git config user.name` 与 `git config user.email`。
+- 真实 adapter 与 UI-collector 联通尚未开始，当前 repo 仍处在 bootstrap 早期。
+
+下一步计划：
+- 进入第一个真实 runtime adapter 开发阶段
+- 优先打通 collector 输出到 web 的本地读取链路
+- 按真实 trace 迭代 schema
