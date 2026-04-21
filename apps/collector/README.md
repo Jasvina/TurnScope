@@ -8,6 +8,7 @@ Current prototype:
 - validates required event fields
 - writes one append-only session log per session
 - writes one summary JSON sidecar per session
+- writes one `*.bundle.json` file per session for easy web loading
 
 ## Try it
 
@@ -21,3 +22,4 @@ Expected output:
 
 - `apps/collector/data/sessions/sess_demo.ndjson`
 - `apps/collector/data/sessions/sess_demo.summary.json`
+- `apps/collector/data/bundles/sess_demo.bundle.json`

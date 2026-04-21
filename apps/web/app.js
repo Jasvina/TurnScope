@@ -344,6 +344,12 @@ function handleLoadedText(text) {
   }
   if (trimmed.startsWith('{')) {
     const parsed = JSON.parse(trimmed);
+    if (parsed.kind === 'turnscope.session.bundle' && parsed.summary && Array.isArray(parsed.events)) {
+      renderCatalog({ sessions: [parsed.summary] });
+      renderStats([], parsed.summary);
+      renderEvents(parsed.events);
+      return;
+    }
     if (Array.isArray(parsed.sessions) || parsed.session_id) {
       renderCatalog(parsed);
       renderStats([], Array.isArray(parsed.sessions) ? parsed.sessions[0] : parsed);

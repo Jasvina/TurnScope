@@ -89,6 +89,20 @@ def write_index(outdir: Path, summaries: List[Dict[str, Any]]) -> Path:
     return index_path
 
 
+def write_bundle(outdir: Path, summary: Dict[str, Any], events: List[Dict[str, Any]]) -> Path:
+    bundles_dir = outdir / "bundles"
+    bundles_dir.mkdir(parents=True, exist_ok=True)
+    bundle_path = bundles_dir / f"{summary['session_id']}.bundle.json"
+    payload = {
+        "version": "0.1.0",
+        "kind": "turnscope.session.bundle",
+        "summary": summary,
+        "events": events,
+    }
+    bundle_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    return bundle_path
+
+
 def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
     grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for event in events:
@@ -108,8 +122,11 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
                 handle.write(json.dumps(event, ensure_ascii=True) + "\n")
         summary = summarize(session_events, log_path.relative_to(outdir), summary_path.relative_to(outdir))
         summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+        bundle_path = write_bundle(outdir, summary, session_events)
+        summary["bundle_path"] = str(bundle_path.relative_to(outdir))
+        summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
         summaries.append(summary)
-        written.extend([log_path, summary_path])
+        written.extend([log_path, summary_path, bundle_path])
 
     index_path = write_index(outdir, summaries)
     written.append(index_path)

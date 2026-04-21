@@ -509,3 +509,61 @@
 - 继续扩大 Codex fixture 集，尤其是更多 tool / approval / subagent 场景
 - 为 OpenClaw 补第二条输入面，优先考虑 gateway log JSON line 或 transcript JSONL 的真实样例
 - 如果本地端口权限获批，补做 web prototype 的浏览器级真实验证
+
+================================================================
+
+时间：04月21日09时58分
+工作类型：collector bundle 导出 + web 单文件加载链路
+
+计划：
+- 把 collector 和 web 之间的真实文件链路再推进一步。
+- 解决当前“必须分别加载 index.json 和 ndjson”带来的使用摩擦。
+- 产出一个适合本地查看和 handoff 的单文件 session bundle 格式。
+
+执行：
+- 增强 `apps/collector/src/collector.py`：
+  - 在写 `sessions/*.ndjson`、`sessions/*.summary.json`、`index.json` 之外
+  - 额外写出 `bundles/<session_id>.bundle.json`
+- 当前 bundle 结构为：
+  - `version`
+  - `kind = turnscope.session.bundle`
+  - `summary`
+  - `events`
+- 同步把 `bundle_path` 写回 summary 和 index，方便后续读取
+- 增强 web 原型：
+  - 更新 `apps/web/app.js`
+  - 现在除了 `index.json`、`*.summary.json`、`*.ndjson` 外，也支持直接加载 `*.bundle.json`
+  - 加载 bundle 后，web 会同时恢复：
+    - session summary
+    - collector catalog 卡片
+    - timeline / shell / diff / subagent graph
+- 更新文档：
+  - `apps/collector/README.md`
+  - `apps/web/README.md`
+  - `README.md`
+  - 补充 bundle 的用途与工作流说明
+
+结果：
+- TurnScope 现在已经有了更实用的单文件 handoff 格式。
+- 这意味着后续无论是本地验证、给别人复现、还是让 web prototype 离线读一个 session，都不再依赖多文件拼装。
+- 这一步实际上把“collector -> web”的体验从多文件手动拼接，推进到了单文件导入。
+
+验证：
+- 继续跑 Codex adapter -> collector：
+  - 输出成功生成：
+    - `apps/collector/data/bundles/thr_demo.bundle.json`
+- 生成的 `index.json` 已带有：
+  - `bundle_path = bundles/thr_demo.bundle.json`
+- 语法检查通过：
+  - `python3 -m py_compile apps/collector/src/collector.py`
+  - `node --check apps/web/app.js`
+
+风险 / 未决问题：
+- 当前 bundle 还是 per-session 文件，尚未提供多 session 的 bundle pack。
+- web 虽然已能加载 bundle，但还没有更高级的 session picker、跨 session 比较和 bundle diff 能力。
+- bundle 目前默认完整保留 event payload，未来可能还需要 redaction / export profile 设计。
+
+下一步计划：
+- 继续补更多真实 runtime fixture，扩展 Codex / OpenClaw 精度面
+- 为 web 增加更强的 session picker 与 raw event inspector
+- 设计 bundle redaction 策略和 multi-session pack 格式

@@ -23,6 +23,7 @@ Current load modes:
 
 - built-in sample trace
 - pasted NDJSON
+- uploaded `*.bundle.json`
 - uploaded `index.json`
 - uploaded `*.summary.json`
 - uploaded `*.ndjson`
