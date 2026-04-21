@@ -101,15 +101,23 @@ flowchart LR
 The repo now includes a zero-dependency bootstrap path for the first milestone:
 
 - `docs/specs/v0.1-architecture.md` defines the system boundary and MVP
+- `docs/specs/adapter-mapping-codex.md` defines the first real runtime mapping
 - `packages/schema/turnscope-event.schema.json` defines the initial event envelope
+- `packages/adapters-codex/src/map_app_server.py` converts Codex app-server JSONL into canonical NDJSON
+- `packages/adapters-codex/src/eval_samples.py` checks adapter precision against committed golden samples
 - `apps/collector/src/collector.py` ingests sample NDJSON into local session files
-- `apps/web/` contains a static prototype dashboard with timeline, diff, shell, and subagent views
+- `apps/collector/data/index.json` is generated as a local session catalog
+- `apps/web/` contains a static prototype dashboard with timeline, diff, shell, subagent, and collector-index views
 
 Try the current prototype:
 
 ```bash
+python3 packages/adapters-codex/src/map_app_server.py \
+  --input packages/adapters-codex/fixtures/sample-app-server.jsonl \
+  --output /tmp/turnscope_codex.ndjson
+
 python3 apps/collector/src/collector.py \
-  --input packages/schema/examples/minimal-session.ndjson \
+  --input /tmp/turnscope_codex.ndjson \
   --outdir apps/collector/data
 
 cd apps/web
@@ -117,6 +125,12 @@ python3 -m http.server 4173
 ```
 
 Then open `http://localhost:4173`.
+
+To run the sample-driven precision loop for the Codex adapter:
+
+```bash
+python3 packages/adapters-codex/src/eval_samples.py
+```
 
 ## Why not use existing tools?
 
@@ -143,9 +157,11 @@ TurnScope is currently in the **bootstrap implementation phase**. The first mile
 ### Event types in scope
 
 - `session.started`
+- `session.finished`
 - `turn.started`
 - `turn.finished`
 - `tool.called`
+- `tool.finished`
 - `shell.started`
 - `shell.output`
 - `shell.finished`
@@ -200,7 +216,7 @@ If we can deliver that experience, this project will feel real immediately.
 - [x] write the v0.1 architecture note
 - [x] build a tiny collector that stores sessions locally
 - [x] design the first zero-dependency UI around timeline plus process tree plus diff
-- [ ] land the first runtime adapter
+- [x] land the first Codex app-server bootstrap adapter
 
 ### Next
 

@@ -291,3 +291,156 @@
 - 进入第一个真实 runtime adapter 开发阶段
 - 优先打通 collector 输出到 web 的本地读取链路
 - 按真实 trace 迭代 schema
+
+================================================================
+
+时间：04月21日09时28分
+工作类型：Codex adapter 实装 + collector index + web 文件加载
+
+计划：
+- 把下一阶段从“静态骨架”推进到“有真实 runtime 对接能力的 bootstrap”。
+- 基于官方 Codex app-server 文档做首版真实事件映射。
+- 让 collector 生成 `index.json`，并让 web prototype 能读取 collector 输出文件。
+
+执行：
+- 查阅官方 Codex app-server README，抽取第一批稳定可映射事件面：
+  - turn lifecycle
+  - commandExecution
+  - fileChange
+  - approval requests
+  - `serverRequest/resolved`
+  - `collabToolCall` 的 `spawn_agent`
+- 新增 Codex adapter 设计文档：
+  - `docs/specs/adapter-mapping-codex.md`
+- 将 `packages/adapters-codex` 从占位说明升级为可运行包：
+  - `packages/adapters-codex/README.md`
+  - `packages/adapters-codex/fixtures/sample-app-server.jsonl`
+  - `packages/adapters-codex/src/map_app_server.py`
+- adapter 当前支持把 Codex app-server JSONL 转成 TurnScope canonical NDJSON，覆盖：
+  - `turn.started`
+  - `turn.finished`
+  - `shell.started`
+  - `shell.output`
+  - `shell.finished`
+  - `file.changed`
+  - `approval.requested`
+  - `approval.resolved`
+  - `subagent.spawned`
+  - `error.raised`
+- 增强 collector：
+  - 重写 `apps/collector/src/collector.py`
+  - 在每次 ingest 后额外生成 `apps/collector/data/index.json`
+  - index 中保留 `log_path` 与 `summary_path`，方便 web prototype 或后续 API 读取
+- 增强 web prototype：
+  - 更新 `apps/web/index.html`
+  - 更新 `apps/web/styles.css`
+  - 更新 `apps/web/app.js`
+  - 更新 `apps/web/README.md`
+- web 现在支持三类输入：
+  - 内置 sample trace
+  - 粘贴 NDJSON
+  - 上传 collector 输出文件：`index.json`、`*.summary.json`、`*.ndjson`
+- 同步更新 `README.md`：
+  - 加入 Codex adapter 路径说明
+  - 加入 adapter -> collector -> web 的新 quickstart
+  - 将 roadmap 中“首个 runtime adapter”标记为已完成 bootstrap 版本
+
+结果：
+- TurnScope 现在已经有了第一个“真实而不是占位”的 runtime adapter：Codex app-server adapter。
+- collector 不再只会写 session 文件，还能生成 session catalog，这让 web prototype 开始具备读取真实输出的可能。
+- web prototype 不再只能看内置样例，而是能接住 collector 产物，形成更完整的本地工作流。
+
+验证：
+- Codex adapter 运行成功：
+  - 输入：`packages/adapters-codex/fixtures/sample-app-server.jsonl`
+  - 输出：`/tmp/turnscope_codex_adapter.ndjson`
+  - 结果：10 条 Codex message 转为 9 条 TurnScope event
+- collector 运行成功：
+  - 输入：`/tmp/turnscope_codex_adapter.ndjson`
+  - 输出：
+    - `apps/collector/data/sessions/thr_demo.ndjson`
+    - `apps/collector/data/sessions/thr_demo.summary.json`
+    - `apps/collector/data/index.json`
+- 语法检查通过：
+  - `python3 -m py_compile apps/collector/src/collector.py`
+  - `python3 -m py_compile packages/adapters-codex/src/map_app_server.py`
+  - `node --check apps/web/app.js`
+
+风险 / 未决问题：
+- 当前 Codex adapter 仍是 bootstrap 映射，不包含 token usage、plan updates、diff streaming、model reroute 等更复杂信号。
+- `serverRequest/resolved` 只能表示审批请求已结束，不一定完全表达最终用户决定语义；更细粒度信息还要结合对应 item 完成事件继续打磨。
+- web prototype 已能加载文件，但还没有自动发现本地 `apps/collector/data/index.json` 的能力；仍需用户显式上传或粘贴。
+
+下一步计划：
+- 继续丰富 Codex adapter 覆盖面
+- 开始第一个 OpenClaw adapter
+- 为 web 增加 session picker 与更细的 raw event inspector
+- 让 collector 支持多 session 连续 ingest 和更清晰的 dropped-event 统计
+
+================================================================
+
+时间：04月21日09时38分
+工作类型：真实样例驱动的精度优化
+
+计划：
+- 把 Codex adapter 从“能跑”推进到“可被样例回归约束”。
+- 引入 fixture + golden output + precision eval 的工作流。
+- 让后续精度优化不是凭感觉改映射，而是有样例、有期望输出、有已知 gap 清单。
+
+执行：
+- 增强 `packages/adapters-codex/src/map_app_server.py`：
+  - 增加 `session.started` 与 `session.finished` 的合成逻辑
+  - 增加 `--report` 输出能力
+  - 增加按 `method + item.type` 维度记录 mapped / unmapped method 的精细化统计
+- 新增第二组更贴近真实任务形态的 fixture：
+  - `packages/adapters-codex/fixtures/tool-and-error-app-server.jsonl`
+- 保留并继续使用首个审批 / diff / spawn fixture：
+  - `packages/adapters-codex/fixtures/sample-app-server.jsonl`
+- 新增 golden outputs：
+  - `packages/adapters-codex/golden/sample-app-server.expected.ndjson`
+  - `packages/adapters-codex/golden/tool-and-error-app-server.expected.ndjson`
+- 新增 precision eval 脚本：
+  - `packages/adapters-codex/src/eval_samples.py`
+  - 功能：对每个 fixture 运行 adapter，和 golden NDJSON 做逐事件比对，若不一致则失败
+- 新增已知 gap allowlist：
+  - `packages/adapters-codex/expected_gaps.json`
+  - 当前显式允许的 gap：
+    - `item/started:fileChange`
+- 更新文档：
+  - `packages/adapters-codex/README.md`
+  - `README.md`
+  - 将 adapter 的 quickstart 和 precision eval 命令写回仓库对外文档
+
+结果：
+- Codex adapter 已经进入真正的“样例驱动精度优化”阶段，而不是只靠人工 spot-check。
+- 现在任何对 adapter 的修改，都可以被 fixture + golden 输出回归约束。
+- unmapped method 也不再是模糊统计，而是具体到 `item/started:fileChange` 这一类颗粒度，便于后续定点补齐。
+
+验证：
+- `python3 packages/adapters-codex/src/eval_samples.py` 通过：
+  - `sample-app-server.jsonl -> 11 events`
+  - `tool-and-error-app-server.jsonl -> 9 events`
+- precision report 输出正常，当前可见已知 unmapped：
+  - `item/started:fileChange`
+- 继续验证 adapter -> collector 链路：
+  - adapter 输出 11 条 TurnScope event
+  - collector 成功写出：
+    - `apps/collector/data/sessions/thr_demo.ndjson`
+    - `apps/collector/data/sessions/thr_demo.summary.json`
+    - `apps/collector/data/index.json`
+- 语法检查继续通过：
+  - `python3 -m py_compile packages/adapters-codex/src/map_app_server.py`
+  - `python3 -m py_compile packages/adapters-codex/src/eval_samples.py`
+  - `python3 -m py_compile apps/collector/src/collector.py`
+  - `node --check apps/web/app.js`
+
+风险 / 未决问题：
+- 当前 golden 仍然来自 repo 内 committed fixture，而不是来自真实用户采样回放；要进一步逼近真实世界，还需要后续接入更多真实 trace 样例。
+- `item/started:fileChange` 目前被纳入 allowlist，说明这块还没有 canonical event 对应策略，未来要决定是新增事件、映射到已有事件，还是明确保持忽略。
+- 目前精度评测集中在 Codex adapter，OpenClaw 还没有进入同样的 fixture-driven 阶段。
+
+下一步计划：
+- 收集更多 Codex app-server 样例并扩展 golden 集
+- 决定 `item/started:fileChange` 的 canonical 表达方式
+- 开始 OpenClaw adapter 的首版 fixture 和 mapping
+- 如本地端口权限获批，则补做 web prototype 的浏览器级验证

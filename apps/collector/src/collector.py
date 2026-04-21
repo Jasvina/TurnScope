@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 from collections import Counter, defaultdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterable, List, Dict, Any
 
@@ -42,7 +43,7 @@ def validate_event(event: Dict[str, Any]) -> Iterable[str]:
         yield "source must be an object"
 
 
-def summarize(events: List[Dict[str, Any]]) -> Dict[str, Any]:
+def summarize(events: List[Dict[str, Any]], log_path: Path, summary_path: Path) -> Dict[str, Any]:
     counts = Counter(event["type"] for event in events)
     runtimes = sorted({event.get("source", {}).get("runtime", "unknown") for event in events})
     return {
@@ -56,10 +57,13 @@ def summarize(events: List[Dict[str, Any]]) -> Dict[str, Any]:
         "turn_count": counts.get("turn.started", 0),
         "tool_call_count": counts.get("tool.called", 0),
         "shell_count": counts.get("shell.started", 0),
+        "shell_output_count": counts.get("shell.output", 0),
         "file_change_count": counts.get("file.changed", 0),
         "approval_count": counts.get("approval.requested", 0),
         "subagent_count": counts.get("subagent.spawned", 0),
         "error_count": counts.get("error.raised", 0),
+        "log_path": str(log_path),
+        "summary_path": str(summary_path),
     }
 
 
@@ -67,7 +71,22 @@ def infer_status(events: List[Dict[str, Any]]) -> str:
     for event in reversed(events):
         if event["type"] == "session.finished":
             return event.get("payload", {}).get("status", "completed")
+    for event in reversed(events):
+        if event["type"] == "turn.finished":
+            return event.get("payload", {}).get("status", "completed")
     return "incomplete"
+
+
+def write_index(outdir: Path, summaries: List[Dict[str, Any]]) -> Path:
+    index_path = outdir / "index.json"
+    payload = {
+        "version": "0.1.0",
+        "generated_at": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+        "session_count": len(summaries),
+        "sessions": sorted(summaries, key=lambda summary: summary["last_timestamp"], reverse=True),
+    }
+    index_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    return index_path
 
 
 def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
@@ -78,6 +97,7 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
     sessions_dir = outdir / "sessions"
     sessions_dir.mkdir(parents=True, exist_ok=True)
     written = []
+    summaries = []
 
     for session_id, session_events in grouped.items():
         session_events.sort(key=lambda event: (event["occurred_at"], event["id"]))
@@ -86,8 +106,13 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
         with log_path.open("w", encoding="utf-8") as handle:
             for event in session_events:
                 handle.write(json.dumps(event, ensure_ascii=True) + "\n")
-        summary_path.write_text(json.dumps(summarize(session_events), indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+        summary = summarize(session_events, log_path.relative_to(outdir), summary_path.relative_to(outdir))
+        summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+        summaries.append(summary)
         written.extend([log_path, summary_path])
+
+    index_path = write_index(outdir, summaries)
+    written.append(index_path)
     return written
 
 

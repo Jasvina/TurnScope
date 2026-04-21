@@ -1,0 +1,5 @@
+{
+  "allowed_unmapped_methods": [
+    "item/started:fileChange"
+  ]
+}

@@ -31,7 +31,7 @@ const sampleEvents = [
     turn_id: 'turn_001',
     agent_id: 'lead',
     source: { runtime: 'codex', component: 'tool', origin: 'sample' },
-    payload: { name: 'rg', args: ['--files'], target: 'repo' },
+    payload: { tool: 'rg', arguments: ['--files'], target: 'repo' },
     attributes: { latency_ms: 42 },
   },
   {
@@ -127,32 +127,50 @@ const processTree = document.getElementById('process-tree');
 const diffList = document.getElementById('diff-list');
 const agentGraph = document.getElementById('agent-graph');
 const rawView = document.getElementById('raw-view');
+const catalogList = document.getElementById('catalog-list');
+const catalogLabel = document.getElementById('catalog-label');
+const fileInput = document.getElementById('file-input');
 
 function toNdjson(events) {
   return events.map((event) => JSON.stringify(event)).join('\n');
 }
 
 function parseEvents(text) {
-  return text
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return [];
+  }
+  if (trimmed.startsWith('[')) {
+    return JSON.parse(trimmed);
+  }
+  return trimmed
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => JSON.parse(line))
-    .sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+    .sort((a, b) => String(a.occurred_at).localeCompare(String(b.occurred_at)));
 }
 
 function count(events, type) {
   return events.filter((event) => event.type === type).length;
 }
 
-function renderStats(events) {
-  const cards = [
-    ['Session', events[0]?.session_id || 'n/a'],
-    ['Events', String(events.length)],
-    ['Turns', String(count(events, 'turn.started'))],
-    ['Tools', String(count(events, 'tool.called'))],
-    ['Approvals', String(count(events, 'approval.requested'))],
-  ];
+function renderStats(events, summary) {
+  const cards = summary
+    ? [
+        ['Session', summary.session_id || 'n/a'],
+        ['Events', String(summary.event_count || 0)],
+        ['Turns', String(summary.turn_count || 0)],
+        ['Tools', String(summary.tool_call_count || 0)],
+        ['Approvals', String(summary.approval_count || 0)],
+      ]
+    : [
+        ['Session', events[0]?.session_id || 'n/a'],
+        ['Events', String(events.length)],
+        ['Turns', String(count(events, 'turn.started'))],
+        ['Tools', String(count(events, 'tool.called'))],
+        ['Approvals', String(count(events, 'approval.requested'))],
+      ];
   stats.innerHTML = cards
     .map(
       ([label, value]) => `
@@ -166,30 +184,36 @@ function renderStats(events) {
 }
 
 function humanType(type) {
-  return type.replace('.', ' / ');
+  return String(type).replace('.', ' / ');
 }
 
 function detailText(event) {
   if (event.type === 'tool.called') {
-    return `${event.payload.name} ${JSON.stringify(event.payload.args || [])}`;
+    return `${event.payload.tool || event.payload.name} ${JSON.stringify(event.payload.arguments || event.payload.args || [])}`;
+  }
+  if (event.type === 'tool.finished') {
+    return `${event.payload.tool || event.payload.name} finished`;
   }
   if (event.type === 'shell.started') {
     return event.payload.command;
+  }
+  if (event.type === 'shell.output') {
+    return event.payload.delta || '(output chunk)';
   }
   if (event.type === 'shell.finished') {
     return `exit ${event.payload.exit_code}`;
   }
   if (event.type === 'file.changed') {
-    return `${event.payload.path} - ${event.payload.summary}`;
+    return `${event.payload.path || '(multiple files)'} - ${event.payload.summary || event.payload.status || 'changed'}`;
   }
   if (event.type === 'subagent.spawned') {
-    return `${event.payload.child_agent_id} (${event.payload.role})`;
+    return `${event.payload.child_agent_id} (${event.payload.role || event.payload.tool || 'spawn_agent'})`;
   }
   if (event.type === 'approval.requested') {
-    return `${event.payload.kind} / ${event.payload.reason}`;
+    return `${event.payload.kind || 'approval'} / ${event.payload.reason || 'waiting'}`;
   }
   if (event.type === 'approval.resolved') {
-    return `${event.payload.kind} / ${event.payload.decision}`;
+    return `${event.payload.kind || 'approval'} / resolved`;
   }
   if (event.type === 'turn.started') {
     return event.payload.summary || 'turn started';
@@ -197,49 +221,55 @@ function detailText(event) {
   if (event.type === 'session.started') {
     return event.payload.task || 'session started';
   }
+  if (event.type === 'turn.finished' || event.type === 'session.finished') {
+    return event.payload.status || 'completed';
+  }
   return JSON.stringify(event.payload);
 }
 
 function renderTimeline(events) {
   timelineLabel.textContent = `${events.length} events`;
-  timeline.innerHTML = events
-    .map((event) => {
-      const className = event.type.replace('.', '-');
-      return `
-        <div class="timeline-item ${className}">
-          <div class="timeline-meta">${event.occurred_at}<br />${humanType(event.type)}</div>
-          <div>
-            <strong>${detailText(event)}</strong>
-            <div class="timeline-meta">agent: ${event.agent_id || 'n/a'} | runtime: ${event.source.runtime}</div>
-          </div>
-        </div>
-      `;
-    })
-    .join('');
+  timeline.innerHTML = events.length
+    ? events
+        .map((event) => {
+          const className = event.type.replace('.', '-');
+          return `
+            <div class="timeline-item ${className}">
+              <div class="timeline-meta">${event.occurred_at}<br />${humanType(event.type)}</div>
+              <div>
+                <strong>${detailText(event)}</strong>
+                <div class="timeline-meta">agent: ${event.agent_id || 'n/a'} | runtime: ${event.source.runtime}</div>
+              </div>
+            </div>
+          `;
+        })
+        .join('')
+    : '<div class="timeline-item"><div><strong>No events loaded</strong></div></div>';
 }
 
 function renderProcessTree(events) {
-  const shells = events.filter((event) => event.type === 'shell.started' || event.type === 'shell.finished');
-  if (!shells.length) {
-    processTree.innerHTML = '<div class="process-node"><strong>No shell activity</strong></div>';
-    return;
-  }
   const started = events.filter((event) => event.type === 'shell.started');
-  processTree.innerHTML = started
-    .map((event) => {
-      const finished = events.find(
-        (candidate) => candidate.type === 'shell.finished' && candidate.payload.shell_id === event.payload.shell_id,
-      );
-      return `
-        <div class="process-node">
-          <strong>${event.payload.command}</strong>
-          <small>shell id: ${event.payload.shell_id}</small>
-          <small>parent shell: ${event.attributes.parent_shell_id || 'root'}</small>
-          <small>exit: ${finished ? finished.payload.exit_code : 'running'}</small>
-        </div>
-      `;
-    })
-    .join('');
+  processTree.innerHTML = started.length
+    ? started
+        .map((event) => {
+          const finished = events.find(
+            (candidate) => candidate.type === 'shell.finished' && candidate.payload.shell_id === event.payload.shell_id,
+          );
+          const outputs = events.filter(
+            (candidate) => candidate.type === 'shell.output' && candidate.payload.shell_id === event.payload.shell_id,
+          );
+          return `
+            <div class="process-node">
+              <strong>${event.payload.command}</strong>
+              <small>shell id: ${event.payload.shell_id}</small>
+              <small>parent shell: ${(event.attributes || {}).parent_shell_id || 'root'}</small>
+              <small>exit: ${finished ? finished.payload.exit_code : 'running'}</small>
+              <small>output chunks: ${outputs.length}</small>
+            </div>
+          `;
+        })
+        .join('')
+    : '<div class="process-node"><strong>No shell activity</strong></div>';
 }
 
 function renderDiffs(events) {
@@ -249,9 +279,9 @@ function renderDiffs(events) {
         .map(
           (event) => `
             <div class="diff-item">
-              <strong>${event.payload.path}</strong>
-              <small>${event.payload.summary}</small>
-              <small>+${event.attributes.lines_added || 0} / -${event.attributes.lines_removed || 0}</small>
+              <strong>${event.payload.path || '(multiple files)'}</strong>
+              <small>${event.payload.summary || event.payload.status || 'change recorded'}</small>
+              <small>changes: ${event.payload.changes ? event.payload.changes.length : 1}</small>
             </div>
           `,
         )
@@ -265,7 +295,7 @@ function renderAgentGraph(events) {
   const nodes = [`<div class="agent-node lead"><strong>${lead}</strong><small>primary agent</small></div>`];
   subagents.forEach((event) => {
     nodes.push(
-      `<div class="agent-node child"><strong>${event.payload.child_agent_id}</strong><small>${event.payload.role}</small></div>`,
+      `<div class="agent-node child"><strong>${event.payload.child_agent_id}</strong><small>${event.payload.role || event.payload.tool || 'child agent'}</small></div>`,
     );
   });
   agentGraph.innerHTML = nodes.join('');
@@ -275,8 +305,31 @@ function renderRaw(events) {
   rawView.textContent = JSON.stringify(events[0] || {}, null, 2);
 }
 
-function render(events) {
-  renderStats(events);
+function renderCatalog(indexData) {
+  if (!indexData) {
+    catalogLabel.textContent = 'No index loaded';
+    catalogList.innerHTML = '<div class="catalog-item"><strong>Load a collector `index.json` or `*.summary.json` file.</strong></div>';
+    return;
+  }
+  const sessions = Array.isArray(indexData.sessions) ? indexData.sessions : [indexData];
+  catalogLabel.textContent = `${sessions.length} session summaries`;
+  catalogList.innerHTML = sessions
+    .map(
+      (session, position) => `
+        <div class="catalog-item ${position === 0 ? 'active' : ''}">
+          <strong>${session.session_id || 'unknown session'}</strong>
+          <small>status: ${session.status || 'unknown'}</small>
+          <small>events: ${session.event_count || 0}</small>
+          <small>turns: ${session.turn_count || 0}</small>
+          <small>log: ${session.log_path || '(load the NDJSON file for full timeline)'}</small>
+        </div>
+      `,
+    )
+    .join('');
+}
+
+function renderEvents(events) {
+  renderStats(events, null);
   renderTimeline(events);
   renderProcessTree(events);
   renderDiffs(events);
@@ -284,19 +337,79 @@ function render(events) {
   renderRaw(events);
 }
 
+function handleLoadedText(text) {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return;
+  }
+  if (trimmed.startsWith('{')) {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed.sessions) || parsed.session_id) {
+      renderCatalog(parsed);
+      renderStats([], Array.isArray(parsed.sessions) ? parsed.sessions[0] : parsed);
+      return;
+    }
+  }
+  const events = parseEvents(trimmed);
+  renderEvents(events);
+}
+
 document.getElementById('load-sample').addEventListener('click', () => {
   input.value = toNdjson(sampleEvents);
-  render(sampleEvents);
+  renderCatalog({
+    sessions: [
+      {
+        session_id: 'sess_demo',
+        status: 'completed',
+        event_count: sampleEvents.length,
+        turn_count: 1,
+        tool_call_count: 1,
+        approval_count: 1,
+        log_path: 'sample/in-memory',
+      },
+    ],
+  });
+  renderEvents(sampleEvents);
 });
 
 document.getElementById('render-input').addEventListener('click', () => {
   try {
-    const events = parseEvents(input.value);
-    render(events);
+    handleLoadedText(input.value);
   } catch (error) {
     alert(`Could not parse input: ${error.message}`);
   }
 });
 
+document.getElementById('load-file').addEventListener('click', () => {
+  fileInput.click();
+});
+
+fileInput.addEventListener('change', async (event) => {
+  const file = event.target.files[0];
+  if (!file) {
+    return;
+  }
+  const text = await file.text();
+  input.value = text;
+  try {
+    handleLoadedText(text);
+  } catch (error) {
+    alert(`Could not parse file: ${error.message}`);
+  }
+});
+
 input.value = toNdjson(sampleEvents);
-render(sampleEvents);
+renderCatalog({
+  sessions: [
+    {
+      session_id: 'sess_demo',
+      status: 'completed',
+      event_count: sampleEvents.length,
+      turn_count: 1,
+      tool_call_count: 1,
+      approval_count: 1,
+      log_path: 'sample/in-memory',
+    },
+  ],
+});
+renderEvents(sampleEvents);

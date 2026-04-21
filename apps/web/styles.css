@@ -8,6 +8,7 @@
   --green: #0f766e;
   --orange: #c2410c;
   --red: #b91c1c;
+  --purple: #6d28d9;
   --panel: rgba(255, 255, 255, 0.76);
   --shadow: 0 18px 40px rgba(17, 17, 17, 0.12);
 }
@@ -37,7 +38,8 @@ code,
 .timeline-meta,
 .process-node code,
 .diff-item code,
-.stat small {
+.stat small,
+.catalog-item small {
   font-family: "Courier New", Courier, monospace;
 }
 
@@ -176,6 +178,7 @@ h1 {
 .actions {
   display: flex;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 button {
@@ -223,7 +226,8 @@ pre {
   font-size: 0.82rem;
 }
 
-.timeline {
+.timeline,
+.catalog-list {
   display: grid;
   gap: 10px;
 }
@@ -231,7 +235,8 @@ pre {
 .timeline-item,
 .diff-item,
 .process-node,
-.agent-node {
+.agent-node,
+.catalog-item {
   padding: 12px;
   border: 1.5px solid var(--line);
   background: rgba(255, 255, 255, 0.88);
@@ -250,13 +255,15 @@ pre {
   text-transform: uppercase;
 }
 
-.timeline-item.tool-called { border-left: 8px solid var(--green); }
+.timeline-item.tool-called,
+.timeline-item.tool-finished { border-left: 8px solid var(--green); }
 .timeline-item.shell-started,
-.timeline-item.shell-finished { border-left: 8px solid var(--blue); }
+.timeline-item.shell-finished,
+.timeline-item.shell-output { border-left: 8px solid var(--blue); }
 .timeline-item.file-changed { border-left: 8px solid var(--orange); }
 .timeline-item.approval-requested,
 .timeline-item.approval-resolved { border-left: 8px solid var(--red); }
-.timeline-item.subagent-spawned { border-left: 8px solid #7c3aed; }
+.timeline-item.subagent-spawned { border-left: 8px solid var(--purple); }
 
 .process-tree,
 .diff-list,
@@ -267,7 +274,8 @@ pre {
 
 .process-node small,
 .diff-item small,
-.agent-node small {
+.agent-node small,
+.catalog-item small {
   display: block;
   margin-top: 6px;
   color: var(--muted);
@@ -283,6 +291,14 @@ pre {
 
 .agent-node.child {
   background: linear-gradient(180deg, #ede9fe 0%, #f5f3ff 100%);
+}
+
+.catalog-item {
+  background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.catalog-item.active {
+  border-left: 8px solid var(--blue);
 }
 
 @media (max-width: 1080px) {

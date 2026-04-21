@@ -7,7 +7,8 @@ It is intentionally simple:
 - one HTML file
 - one CSS file
 - one JS file
-- sample event data embedded in the page
+- no build step
+- supports pasted NDJSON plus uploaded collector output files
 
 ## Try it
 
@@ -18,4 +19,10 @@ python3 -m http.server 4173
 
 Then open `http://localhost:4173`.
 
-You can also paste NDJSON into the ingest panel and re-render the dashboard without a backend.
+Current load modes:
+
+- built-in sample trace
+- pasted NDJSON
+- uploaded `index.json`
+- uploaded `*.summary.json`
+- uploaded `*.ndjson`

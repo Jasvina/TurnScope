@@ -1,0 +1,7 @@
+{"method":"turn/started","params":{"turn":{"id":"turn_002","threadId":"thr_tools","status":"inProgress"}},"receivedAt":"2026-04-21T01:10:00Z"}
+{"method":"item/started","params":{"threadId":"thr_tools","turnId":"turn_002","item":{"type":"mcpToolCall","id":"mcp_001","tool":"search_repo","server":"repo-index","arguments":{"query":"collector index"},"status":"inProgress"}},"receivedAt":"2026-04-21T01:10:01Z"}
+{"method":"item/completed","params":{"threadId":"thr_tools","turnId":"turn_002","item":{"type":"mcpToolCall","id":"mcp_001","tool":"search_repo","server":"repo-index","result":{"hits":3},"status":"completed"}},"receivedAt":"2026-04-21T01:10:03Z"}
+{"method":"item/started","params":{"threadId":"thr_tools","turnId":"turn_002","item":{"type":"dynamicToolCall","id":"dyn_001","tool":"read_file","arguments":{"path":"apps/collector/src/collector.py"},"status":"inProgress"}},"receivedAt":"2026-04-21T01:10:04Z"}
+{"method":"item/completed","params":{"threadId":"thr_tools","turnId":"turn_002","item":{"type":"dynamicToolCall","id":"dyn_001","tool":"read_file","result":{"lines":120},"status":"completed"}},"receivedAt":"2026-04-21T01:10:05Z"}
+{"method":"error","params":{"threadId":"thr_tools","turnId":"turn_002","error":{"message":"tool timeout","code":"tool_timeout"}},"receivedAt":"2026-04-21T01:10:06Z"}
+{"method":"turn/completed","params":{"turn":{"id":"turn_002","threadId":"thr_tools","status":"failed","error":{"message":"tool timeout","code":"tool_timeout"}}},"receivedAt":"2026-04-21T01:10:07Z"}

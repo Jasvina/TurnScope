@@ -33,10 +33,12 @@
             <div class="actions">
               <button id="load-sample">Load sample</button>
               <button id="render-input">Render input</button>
+              <button id="load-file">Load file</button>
+              <input id="file-input" type="file" hidden />
             </div>
           </div>
           <textarea id="event-input" spellcheck="false"></textarea>
-          <p class="hint">Paste NDJSON events here. The prototype derives timeline, shell, diff, and subagent views in-browser.</p>
+          <p class="hint">Paste NDJSON events here, or load collector output such as `index.json`, `*.summary.json`, or `*.ndjson`.</p>
         </article>
 
         <article class="panel timeline-panel">
@@ -45,6 +47,14 @@
             <span id="timeline-label">0 events</span>
           </div>
           <div class="timeline" id="timeline"></div>
+        </article>
+
+        <article class="panel catalog-panel">
+          <div class="panel-head">
+            <h2>Collector Index</h2>
+            <span id="catalog-label">No index loaded</span>
+          </div>
+          <div class="catalog-list" id="catalog-list"></div>
         </article>
 
         <article class="panel process-panel">
