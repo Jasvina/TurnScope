@@ -622,3 +622,38 @@
 - 加入更细的 raw event inspector
 - 设计 bundle redaction / export profile
 - 继续扩展 Codex/OpenClaw 真实 fixture 覆盖
+
+================================================================
+
+时间：04月21日11时27分
+工作类型：web Raw Event Lens 可用性增强
+
+计划：
+- 让 web prototype 的 timeline 与 Raw Event Lens 产生真实交互联动。
+- 从“只展示第一条 event”升级为“点击任意 timeline event 查看 raw canonical event”。
+
+执行：
+- 更新 `apps/web/app.js`：
+  - timeline item 现在带 `data-event-index`
+  - 维护 `visibleEvents`、`activeEventIndex`
+  - 新增 `selectEvent(index)`
+  - 新增 timeline click handler
+- 更新 `apps/web/styles.css`：
+  - timeline item 改为按钮式交互元素
+  - 增加 active outline，让当前选中的 event 更清楚
+
+结果：
+- web 原型现在已经具备更像调试器的基础交互：点击一条 timeline event，Raw Event Lens 立即显示这条 canonical event 的完整 JSON。
+- 这使后续 adapter 精度调试更容易，因为可以在 UI 上直接定位映射后的 payload / attributes。
+
+验证：
+- `node --check apps/web/app.js` 通过。
+
+风险 / 未决问题：
+- 由于本地端口绑定仍受限，当前仍未完成真实浏览器点击验证。
+- Raw Event Lens 目前只是完整 JSON 展示，未来可以做字段高亮、payload/attributes 分区和复制按钮。
+
+下一步计划：
+- 做 Raw Event Lens 字段分区和复制能力
+- 做 timeline filter / search
+- 一旦本地端口权限可用，补浏览器级验证

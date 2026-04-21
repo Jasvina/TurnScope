@@ -132,7 +132,9 @@ const catalogLabel = document.getElementById('catalog-label');
 const fileInput = document.getElementById('file-input');
 let loadedSessionEvents = {};
 let loadedSessionSummaries = {};
+let visibleEvents = [];
 let activeSessionId = null;
+let activeEventIndex = 0;
 const eventTypeOrder = {
   'session.started': 0,
   'turn.started': 10,
@@ -251,19 +253,21 @@ function detailText(event) {
 }
 
 function renderTimeline(events) {
+  visibleEvents = events;
+  activeEventIndex = 0;
   timelineLabel.textContent = `${events.length} events`;
   timeline.innerHTML = events.length
     ? events
-        .map((event) => {
+        .map((event, index) => {
           const className = event.type.replace('.', '-');
           return `
-            <div class="timeline-item ${className}">
+            <button class="timeline-item ${className} ${index === 0 ? 'active' : ''}" data-event-index="${index}">
               <div class="timeline-meta">${event.occurred_at}<br />${humanType(event.type)}</div>
               <div>
                 <strong>${detailText(event)}</strong>
                 <div class="timeline-meta">agent: ${event.agent_id || 'n/a'} | runtime: ${event.source.runtime}</div>
               </div>
-            </div>
+            </button>
           `;
         })
         .join('')
@@ -326,6 +330,15 @@ function renderAgentGraph(events) {
 
 function renderRaw(events) {
   rawView.textContent = JSON.stringify(events[0] || {}, null, 2);
+}
+
+function selectEvent(index) {
+  activeEventIndex = index;
+  const event = visibleEvents[index];
+  rawView.textContent = JSON.stringify(event || {}, null, 2);
+  Array.from(timeline.querySelectorAll('[data-event-index]')).forEach((node) => {
+    node.classList.toggle('active', Number(node.getAttribute('data-event-index')) === index);
+  });
 }
 
 function renderCatalog(indexData) {
@@ -479,6 +492,14 @@ catalogList.addEventListener('click', (event) => {
     sessions.forEach((node) => node.classList.toggle('active', node.getAttribute('data-session-id') === sessionId));
     renderEvents(loadedSessionEvents[sessionId], loadedSessionSummaries[sessionId] || null);
   }
+});
+
+timeline.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-event-index]');
+  if (!target) {
+    return;
+  }
+  selectEvent(Number(target.getAttribute('data-event-index')));
 });
 
 input.value = toNdjson(sampleEvents);
