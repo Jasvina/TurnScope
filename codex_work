@@ -718,3 +718,44 @@
 - 给 web prototype 增加 filter count、empty state 和一键复制 raw event。
 - 继续收集真实 Codex / OpenClaw trace，扩大 fixture-driven precision 集。
 - 设计 redaction profile，避免真实 trace bundle 泄露敏感内容。
+
+================================================================
+
+时间：04月21日11时46分
+工作类型：阶段收尾 + GitHub 进度文档
+
+计划：
+- 停止继续扩展功能，把当前阶段内容整理成 GitHub 上可直接阅读的进度文档。
+- 记录目前已经完成的能力、验证结果、已知限制和未来优化方向。
+- 在 README 中加入进度文档入口，方便后续人类或 AI 接手。
+
+执行：
+- 新增文档：
+  - `docs/progress/current-progress.md`
+- 文档内容覆盖：
+  - 当前项目状态
+  - 已完成 repository assets
+  - architecture / schema / collector / web / Codex adapter / OpenClaw adapter 进度
+  - 已完成验证
+  - 当前仍未完成的范围
+  - 未来优化计划
+  - 推荐的下一个 milestone
+- 更新 `README.md`：
+  - 增加 `docs/progress/current-progress.md` 的链接入口。
+
+结果：
+- 当前阶段的内容已经沉淀到仓库文档中，不再只依赖聊天记录或 `codex_work`。
+- GitHub README 可以引导读者进入更完整的 progress / roadmap 文档。
+- 后续优化方向已经显式记录，方便继续迭代。
+
+验证：
+- 已检查 `docs/progress/current-progress.md` 写入成功。
+- README 已加入进度文档链接。
+
+风险 / 未决问题：
+- 进度文档是人工维护快照，后续每完成一个 milestone 都应更新。
+- 当前仍缺 CI 自动验证，未来需要把现有手工命令固化到 GitHub Actions。
+
+下一步计划：
+- 本阶段到此收尾。
+- 如果继续开发，优先做 CI、redaction profile、真实 Codex capture 验证。

@@ -144,6 +144,8 @@ python3 packages/adapters-codex/src/eval_samples.py
 
 Then load either one generated `apps/collector/data/bundles/*.bundle.json` file or the full `apps/collector/data/bundles/session-pack.json` file into `apps/web`.
 
+For current progress and planned optimization work, see [`docs/progress/current-progress.md`](docs/progress/current-progress.md).
+
 For the OpenClaw session-store bootstrap adapter:
 
 ```bash
