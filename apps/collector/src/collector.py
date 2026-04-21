@@ -11,6 +11,30 @@ from pathlib import Path
 from typing import Iterable, List, Dict, Any
 
 REQUIRED_FIELDS = ["version", "id", "type", "occurred_at", "session_id", "source", "payload"]
+EVENT_TYPE_ORDER = {
+    "session.started": 0,
+    "turn.started": 10,
+    "tool.called": 20,
+    "shell.started": 30,
+    "shell.output": 31,
+    "shell.finished": 32,
+    "tool.finished": 40,
+    "file.changed": 50,
+    "approval.requested": 60,
+    "approval.resolved": 61,
+    "subagent.spawned": 70,
+    "error.raised": 80,
+    "turn.finished": 90,
+    "session.finished": 100,
+}
+
+
+def event_sort_key(event: Dict[str, Any]) -> tuple[str, int, str]:
+    return (
+        event["occurred_at"],
+        EVENT_TYPE_ORDER.get(event["type"], 999),
+        event["id"],
+    )
 
 
 def load_events(path: Path) -> List[Dict[str, Any]]:
@@ -103,6 +127,20 @@ def write_bundle(outdir: Path, summary: Dict[str, Any], events: List[Dict[str, A
     return bundle_path
 
 
+def write_pack(outdir: Path, sessions: List[Dict[str, Any]]) -> Path:
+    bundles_dir = outdir / "bundles"
+    bundles_dir.mkdir(parents=True, exist_ok=True)
+    pack_path = bundles_dir / "session-pack.json"
+    payload = {
+        "version": "0.1.0",
+        "kind": "turnscope.session.pack",
+        "generated_at": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+        "sessions": sessions,
+    }
+    pack_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    return pack_path
+
+
 def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
     grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for event in events:
@@ -112,9 +150,10 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
     sessions_dir.mkdir(parents=True, exist_ok=True)
     written = []
     summaries = []
+    packs = []
 
     for session_id, session_events in grouped.items():
-        session_events.sort(key=lambda event: (event["occurred_at"], event["id"]))
+        session_events.sort(key=event_sort_key)
         log_path = sessions_dir / f"{session_id}.ndjson"
         summary_path = sessions_dir / f"{session_id}.summary.json"
         with log_path.open("w", encoding="utf-8") as handle:
@@ -126,10 +165,13 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
         summary["bundle_path"] = str(bundle_path.relative_to(outdir))
         summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
         summaries.append(summary)
+        packs.append({"summary": summary, "events": session_events})
         written.extend([log_path, summary_path, bundle_path])
 
     index_path = write_index(outdir, summaries)
     written.append(index_path)
+    pack_path = write_pack(outdir, packs)
+    written.append(pack_path)
     return written
 
 

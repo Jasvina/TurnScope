@@ -130,6 +130,29 @@ const rawView = document.getElementById('raw-view');
 const catalogList = document.getElementById('catalog-list');
 const catalogLabel = document.getElementById('catalog-label');
 const fileInput = document.getElementById('file-input');
+let loadedSessionEvents = {};
+let loadedSessionSummaries = {};
+let activeSessionId = null;
+const eventTypeOrder = {
+  'session.started': 0,
+  'turn.started': 10,
+  'tool.called': 20,
+  'shell.started': 30,
+  'shell.output': 31,
+  'shell.finished': 32,
+  'tool.finished': 40,
+  'file.changed': 50,
+  'approval.requested': 60,
+  'approval.resolved': 61,
+  'subagent.spawned': 70,
+  'error.raised': 80,
+  'turn.finished': 90,
+  'session.finished': 100,
+};
+
+function eventSortKey(event) {
+  return `${String(event.occurred_at)}|${String(eventTypeOrder[event.type] ?? 999).padStart(3, '0')}|${event.id}`;
+}
 
 function toNdjson(events) {
   return events.map((event) => JSON.stringify(event)).join('\n');
@@ -148,7 +171,7 @@ function parseEvents(text) {
     .map((line) => line.trim())
     .filter(Boolean)
     .map((line) => JSON.parse(line))
-    .sort((a, b) => String(a.occurred_at).localeCompare(String(b.occurred_at)));
+    .sort((a, b) => eventSortKey(a).localeCompare(eventSortKey(b)));
 }
 
 function count(events, type) {
@@ -316,20 +339,20 @@ function renderCatalog(indexData) {
   catalogList.innerHTML = sessions
     .map(
       (session, position) => `
-        <div class="catalog-item ${position === 0 ? 'active' : ''}">
+        <button class="catalog-item ${activeSessionId === (session.session_id || '') || (!activeSessionId && position === 0) ? 'active' : ''}" data-session-id="${session.session_id || ''}">
           <strong>${session.session_id || 'unknown session'}</strong>
           <small>status: ${session.status || 'unknown'}</small>
           <small>events: ${session.event_count || 0}</small>
           <small>turns: ${session.turn_count || 0}</small>
-          <small>log: ${session.log_path || '(load the NDJSON file for full timeline)'}</small>
-        </div>
+          <small>bundle: ${session.bundle_path || session.log_path || '(summary only)'}</small>
+        </button>
       `,
     )
     .join('');
 }
 
-function renderEvents(events) {
-  renderStats(events, null);
+function renderEvents(events, summary = null) {
+  renderStats(events, summary);
   renderTimeline(events);
   renderProcessTree(events);
   renderDiffs(events);
@@ -344,24 +367,61 @@ function handleLoadedText(text) {
   }
   if (trimmed.startsWith('{')) {
     const parsed = JSON.parse(trimmed);
+    if (parsed.kind === 'turnscope.session.pack' && Array.isArray(parsed.sessions)) {
+      loadedSessionEvents = Object.fromEntries(
+        parsed.sessions.map((session) => [session.summary.session_id, session.events]),
+      );
+      loadedSessionSummaries = Object.fromEntries(
+        parsed.sessions.map((session) => [session.summary.session_id, session.summary]),
+      );
+      activeSessionId = parsed.sessions[0]?.summary?.session_id || null;
+      renderCatalog({ sessions: parsed.sessions.map((session) => session.summary) });
+      if (activeSessionId) {
+        renderEvents(loadedSessionEvents[activeSessionId], parsed.sessions[0].summary);
+      }
+      return;
+    }
     if (parsed.kind === 'turnscope.session.bundle' && parsed.summary && Array.isArray(parsed.events)) {
+      loadedSessionEvents = { [parsed.summary.session_id]: parsed.events };
+      loadedSessionSummaries = { [parsed.summary.session_id]: parsed.summary };
+      activeSessionId = parsed.summary.session_id;
       renderCatalog({ sessions: [parsed.summary] });
-      renderStats([], parsed.summary);
-      renderEvents(parsed.events);
+      renderEvents(parsed.events, parsed.summary);
       return;
     }
     if (Array.isArray(parsed.sessions) || parsed.session_id) {
+      loadedSessionEvents = {};
+      loadedSessionSummaries = Array.isArray(parsed.sessions)
+        ? Object.fromEntries(parsed.sessions.map((session) => [session.session_id, session]))
+        : { [parsed.session_id]: parsed };
+      activeSessionId = Array.isArray(parsed.sessions) ? parsed.sessions[0]?.session_id : parsed.session_id;
       renderCatalog(parsed);
       renderStats([], Array.isArray(parsed.sessions) ? parsed.sessions[0] : parsed);
       return;
     }
   }
+  loadedSessionEvents = {};
+  loadedSessionSummaries = {};
+  activeSessionId = null;
   const events = parseEvents(trimmed);
   renderEvents(events);
 }
 
 document.getElementById('load-sample').addEventListener('click', () => {
   input.value = toNdjson(sampleEvents);
+  loadedSessionEvents = { sess_demo: sampleEvents };
+  loadedSessionSummaries = {
+    sess_demo: {
+      session_id: 'sess_demo',
+      status: 'completed',
+      event_count: sampleEvents.length,
+      turn_count: 1,
+      tool_call_count: 1,
+      approval_count: 1,
+      log_path: 'sample/in-memory',
+    },
+  };
+  activeSessionId = 'sess_demo';
   renderCatalog({
     sessions: [
       {
@@ -404,7 +464,37 @@ fileInput.addEventListener('change', async (event) => {
   }
 });
 
+catalogList.addEventListener('click', (event) => {
+  const target = event.target.closest('[data-session-id]');
+  if (!target) {
+    return;
+  }
+  const sessionId = target.getAttribute('data-session-id');
+  if (!sessionId) {
+    return;
+  }
+  activeSessionId = sessionId;
+  if (loadedSessionEvents[sessionId]) {
+    const sessions = Array.from(catalogList.querySelectorAll('[data-session-id]'));
+    sessions.forEach((node) => node.classList.toggle('active', node.getAttribute('data-session-id') === sessionId));
+    renderEvents(loadedSessionEvents[sessionId], loadedSessionSummaries[sessionId] || null);
+  }
+});
+
 input.value = toNdjson(sampleEvents);
+loadedSessionEvents = { sess_demo: sampleEvents };
+loadedSessionSummaries = {
+  sess_demo: {
+    session_id: 'sess_demo',
+    status: 'completed',
+    event_count: sampleEvents.length,
+    turn_count: 1,
+    tool_call_count: 1,
+    approval_count: 1,
+    log_path: 'sample/in-memory',
+  },
+};
+activeSessionId = 'sess_demo';
 renderCatalog({
   sessions: [
     {

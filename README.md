@@ -110,6 +110,7 @@ The repo now includes a zero-dependency bootstrap path for the first milestone:
 - `apps/collector/src/collector.py` ingests sample NDJSON into local session files
 - `apps/collector/data/index.json` is generated as a local session catalog
 - `apps/collector/data/bundles/*.bundle.json` is generated as a single-file handoff format for the web prototype
+- `apps/collector/data/bundles/session-pack.json` is generated for multi-session loading and switching
 - `apps/web/` contains a static prototype dashboard with timeline, diff, shell, subagent, and collector-index views
 
 Try the current prototype:
@@ -135,7 +136,7 @@ To run the sample-driven precision loop for the Codex adapter:
 python3 packages/adapters-codex/src/eval_samples.py
 ```
 
-Then load one of the generated `apps/collector/data/bundles/*.bundle.json` files into `apps/web`.
+Then load either one generated `apps/collector/data/bundles/*.bundle.json` file or the full `apps/collector/data/bundles/session-pack.json` file into `apps/web`.
 
 For the OpenClaw session-store bootstrap adapter:
 

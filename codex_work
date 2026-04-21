@@ -567,3 +567,58 @@
 - 继续补更多真实 runtime fixture，扩展 Codex / OpenClaw 精度面
 - 为 web 增加更强的 session picker 与 raw event inspector
 - 设计 bundle redaction 策略和 multi-session pack 格式
+
+================================================================
+
+时间：04月21日11时20分
+工作类型：multi-session pack + session picker + 排序精度修复
+
+计划：
+- 将单 session bundle 升级为 multi-session pack。
+- 让 web prototype 能加载 pack 并在多个 session 之间切换。
+- 继续用样例验证暴露真实精度问题并修复。
+
+执行：
+- 增强 collector：
+  - `apps/collector/src/collector.py` 现在除 per-session bundle 外，还会写出：
+    - `apps/collector/data/bundles/session-pack.json`
+  - pack 格式：
+    - `kind = turnscope.session.pack`
+    - `sessions = [{ summary, events }]`
+- 增强 web prototype：
+  - `apps/web/app.js` 现在支持加载 `turnscope.session.pack`
+  - catalog panel 现在可以作为 session picker 使用
+  - 点击 session catalog item 后，会切换对应 session 的 timeline / shell / diff / graph / raw view
+- 修复一个验证中暴露的排序精度问题：
+  - OpenClaw cron session 只有 `updatedAt` 没有 `createdAt` 时，`session.started` 与 `session.finished` 时间戳相同
+  - collector 原本只按 `(occurred_at, id)` 排序，会把 `session.finished` 排在 `session.started` 前面
+  - 现在 collector 和 web 都使用 canonical event type order，保证同时间戳下 `session.started` 先于 `session.finished`
+- 更新文档：
+  - `README.md`
+  - `apps/collector/README.md`
+  - `apps/web/README.md`
+
+结果：
+- TurnScope 的本地查看链路进一步成型：adapter -> collector -> session-pack -> web session picker。
+- web prototype 现在不只是单条 trace 查看器，也开始具备多 session 浏览的形态。
+- 一个真实样例触发的排序 bug 已被修复，说明 fixture-driven workflow 开始发挥作用。
+
+验证：
+- 使用 OpenClaw 两会话 fixture 跑完整链路：
+  - OpenClaw adapter 输出 4 条 event
+  - collector 输出 per-session bundles 和 `session-pack.json`
+  - pack 中包含 2 个 session
+  - 两个 session 的 event order 都通过断言：`session.started` 在 `session.finished` 前
+- 语法检查通过：
+  - `python3 -m py_compile apps/collector/src/collector.py`
+  - `node --check apps/web/app.js`
+
+风险 / 未决问题：
+- session picker 目前仍是静态文件驱动，没有后端 API、自动目录发现或增量刷新。
+- web 仍未完成真实浏览器级交互验证，因为本地端口绑定权限仍未在当前环境成功生效。
+- pack 暂未设计 redaction profile，后续涉及真实 trace 时需要隐私过滤。
+
+下一步计划：
+- 加入更细的 raw event inspector
+- 设计 bundle redaction / export profile
+- 继续扩展 Codex/OpenClaw 真实 fixture 覆盖
