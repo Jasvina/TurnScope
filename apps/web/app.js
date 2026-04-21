@@ -130,8 +130,12 @@ const rawView = document.getElementById('raw-view');
 const catalogList = document.getElementById('catalog-list');
 const catalogLabel = document.getElementById('catalog-label');
 const fileInput = document.getElementById('file-input');
+const eventSearch = document.getElementById('event-search');
+const eventTypeFilter = document.getElementById('event-type-filter');
+const clearFilters = document.getElementById('clear-filters');
 let loadedSessionEvents = {};
 let loadedSessionSummaries = {};
+let currentSessionEvents = [];
 let visibleEvents = [];
 let activeSessionId = null;
 let activeEventIndex = 0;
@@ -178,6 +182,44 @@ function parseEvents(text) {
 
 function count(events, type) {
   return events.filter((event) => event.type === type).length;
+}
+
+function searchableEventText(event) {
+  return [
+    event.type,
+    event.occurred_at,
+    event.session_id,
+    event.turn_id,
+    event.agent_id,
+    event.source?.runtime,
+    event.source?.component,
+    detailText(event),
+    JSON.stringify(event.payload || {}),
+    JSON.stringify(event.attributes || {}),
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function populateEventTypeFilter(events) {
+  const previous = eventTypeFilter.value;
+  const types = Array.from(new Set(events.map((event) => event.type))).sort();
+  eventTypeFilter.innerHTML = [
+    '<option value="">All event types</option>',
+    ...types.map((type) => `<option value="${type}">${type}</option>`),
+  ].join('');
+  eventTypeFilter.value = types.includes(previous) ? previous : '';
+}
+
+function filteredEvents() {
+  const query = eventSearch.value.trim().toLowerCase();
+  const selectedType = eventTypeFilter.value;
+  return currentSessionEvents.filter((event) => {
+    const matchesType = !selectedType || event.type === selectedType;
+    const matchesQuery = !query || searchableEventText(event).includes(query);
+    return matchesType && matchesQuery;
+  });
 }
 
 function renderStats(events, summary) {
@@ -252,10 +294,10 @@ function detailText(event) {
   return JSON.stringify(event.payload);
 }
 
-function renderTimeline(events) {
+function renderTimeline(events, totalCount = events.length) {
   visibleEvents = events;
   activeEventIndex = 0;
-  timelineLabel.textContent = `${events.length} events`;
+  timelineLabel.textContent = totalCount === events.length ? `${events.length} events` : `${events.length}/${totalCount} events`;
   timeline.innerHTML = events.length
     ? events
         .map((event, index) => {
@@ -364,13 +406,20 @@ function renderCatalog(indexData) {
     .join('');
 }
 
-function renderEvents(events, summary = null) {
-  renderStats(events, summary);
-  renderTimeline(events);
+function applyEventFilters() {
+  const events = filteredEvents();
+  renderTimeline(events, currentSessionEvents.length);
   renderProcessTree(events);
   renderDiffs(events);
   renderAgentGraph(events);
   renderRaw(events);
+}
+
+function renderEvents(events, summary = null) {
+  currentSessionEvents = events;
+  renderStats(events, summary);
+  populateEventTypeFilter(events);
+  applyEventFilters();
 }
 
 function handleLoadedText(text) {
@@ -500,6 +549,14 @@ timeline.addEventListener('click', (event) => {
     return;
   }
   selectEvent(Number(target.getAttribute('data-event-index')));
+});
+
+eventSearch.addEventListener('input', applyEventFilters);
+eventTypeFilter.addEventListener('change', applyEventFilters);
+clearFilters.addEventListener('click', () => {
+  eventSearch.value = '';
+  eventTypeFilter.value = '';
+  applyEventFilters();
 });
 
 input.value = toNdjson(sampleEvents);

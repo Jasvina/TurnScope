@@ -46,6 +46,13 @@
             <h2>Timeline</h2>
             <span id="timeline-label">0 events</span>
           </div>
+          <div class="filter-bar">
+            <input id="event-search" type="search" placeholder="Search command, file, agent, payload..." />
+            <select id="event-type-filter" aria-label="Filter event type">
+              <option value="">All event types</option>
+            </select>
+            <button id="clear-filters">Clear filters</button>
+          </div>
           <div class="timeline" id="timeline"></div>
         </article>
 
@@ -84,7 +91,7 @@
         <article class="panel raw-panel">
           <div class="panel-head">
             <h2>Raw Event Lens</h2>
-            <span>First canonical event</span>
+            <span>Selected canonical event</span>
           </div>
           <pre id="raw-view"></pre>
         </article>

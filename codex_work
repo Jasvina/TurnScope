@@ -657,3 +657,64 @@
 - 做 Raw Event Lens 字段分区和复制能力
 - 做 timeline filter / search
 - 一旦本地端口权限可用，补浏览器级验证
+
+================================================================
+
+时间：04月21日11时42分
+工作类型：真实能力扩展 + README 宣传 poster + 浏览器级 HTTP 验证
+
+计划：
+- 继续扩大 TurnScope 的真实可用能力，不只停留在 adapter / collector 的数据链路。
+- 增强 web prototype 的实际调试能力，让用户能在真实 session timeline 中搜索和筛选事件。
+- 给 README 增加一个能宣传项目气质的 poster 视觉资产，让项目主页更有传播力。
+
+执行：
+- 使用 design-first 的 poster 思路创建宣传视觉：
+  - `docs/design/turnscope-poster-philosophy.md`
+  - `docs/assets/turnscope-poster.svg`
+- 更新 `README.md`：
+  - 新增 `Poster` 章节
+  - 嵌入 `docs/assets/turnscope-poster.svg`
+  - 更新 prototype 描述，说明 web 支持 timeline search、event-type filtering 和 raw-event inspection
+- 增强 web prototype：
+  - `apps/web/index.html` 新增 timeline 搜索框、event type 下拉筛选、清空筛选按钮
+  - `apps/web/app.js` 新增全文搜索、event type filter、filtered timeline count、当前 session event 状态
+  - `apps/web/styles.css` 新增 filter bar 样式和输入控件样式
+  - `apps/web/README.md` 增加当前 inspection features 说明
+- 清理了一个旧的本地 `python3 -m http.server` 进程占用 4173 端口的问题，并重新完成本地 HTTP 验证。
+
+结果：
+- README 现在有更强的宣传视觉，不再只是技术说明，而是有一个可被 GitHub 页面直接展示的 poster。
+- web prototype 更像真实调试工具：可以按关键词搜索 command / file / agent / payload / attributes，也可以按 event type 筛选。
+- 本地端口验证已成功，不再只是 `node --check` 级别的静态验证。
+
+验证：
+- Codex adapter precision loop 通过：
+  - `python3 packages/adapters-codex/src/eval_samples.py`
+- OpenClaw adapter precision loop 通过：
+  - `python3 packages/adapters-openclaw/src/eval_samples.py`
+- Python 语法检查通过：
+  - `python3 -m py_compile apps/collector/src/collector.py ...`
+- Web JS 语法检查通过：
+  - `node --check apps/web/app.js`
+- Collector pack 链路通过：
+  - OpenClaw fixture -> adapter -> collector -> `session-pack.json`
+  - pack 内 2 个 session，且每个 session 都保证 `session.started` 在 `session.finished` 前
+- SVG XML 解析通过：
+  - `docs/assets/turnscope-poster.svg`
+  - `docs/assets/turnscope-hero.svg`
+  - `docs/assets/turnscope-panels.svg`
+- 本地 HTTP 验证通过：
+  - `python3 -m http.server 4173 --directory apps/web`
+  - `curl http://127.0.0.1:4173/`
+  - 页面中确认存在 `TurnScope Prototype`
+
+风险 / 未决问题：
+- 当前搜索/筛选是纯前端内存过滤，未来大型 session pack 可能需要 indexing 或虚拟列表。
+- poster 当前是 SVG 资产，未额外导出 PNG/PDF；README 展示已经可用，后续可按需要加 PNG 版本。
+- 尚未使用真实浏览器自动化点击测试 filter 和 timeline inspector，但 HTTP 静态加载已验证成功。
+
+下一步计划：
+- 给 web prototype 增加 filter count、empty state 和一键复制 raw event。
+- 继续收集真实 Codex / OpenClaw trace，扩大 fixture-driven precision 集。
+- 设计 redaction profile，避免真实 trace bundle 泄露敏感内容。

@@ -196,7 +196,9 @@ button:hover {
 }
 
 textarea,
-pre {
+pre,
+input,
+select {
   width: 100%;
   border: 2px solid var(--line);
   background: #fffdfa;
@@ -209,6 +211,12 @@ textarea {
   resize: vertical;
   font-size: 0.9rem;
   line-height: 1.45;
+}
+
+input,
+select {
+  padding: 11px 12px;
+  font-size: 0.88rem;
 }
 
 pre {
@@ -230,6 +238,13 @@ pre {
 .catalog-list {
   display: grid;
   gap: 10px;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(180px, 260px) auto;
+  gap: 10px;
+  margin-bottom: 14px;
 }
 
 .timeline-item,
@@ -329,6 +344,10 @@ pre {
   }
 
   .timeline-item {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-bar {
     grid-template-columns: 1fr;
   }
 }

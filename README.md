@@ -25,6 +25,12 @@ Instead of forcing you to reconstruct a run from terminal scrollback, scattered 
 - every approval wait
 - every subagent hop
 
+## Poster
+
+<p align="center">
+  <img src="docs/assets/turnscope-poster.svg" alt="TurnScope poster: Stop reading terminal scrollback. Start reading the run." width="100%" />
+</p>
+
 ## The problem
 
 Coding agents are getting powerful fast. Their visibility is not.
@@ -111,7 +117,7 @@ The repo now includes a zero-dependency bootstrap path for the first milestone:
 - `apps/collector/data/index.json` is generated as a local session catalog
 - `apps/collector/data/bundles/*.bundle.json` is generated as a single-file handoff format for the web prototype
 - `apps/collector/data/bundles/session-pack.json` is generated for multi-session loading and switching
-- `apps/web/` contains a static prototype dashboard with timeline, diff, shell, subagent, and collector-index views
+- `apps/web/` contains a static prototype dashboard with timeline search, event-type filtering, diff, shell, subagent, collector-index, and raw-event inspection views
 
 Try the current prototype:
 

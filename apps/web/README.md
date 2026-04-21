@@ -28,3 +28,10 @@ Current load modes:
 - uploaded `index.json`
 - uploaded `*.summary.json`
 - uploaded `*.ndjson`
+
+Current inspection features:
+
+- session picker for multi-session packs
+- timeline search across type, payload, attributes, command, file, and agent fields
+- event-type filtering
+- clickable timeline rows that drive the Raw Event Lens
