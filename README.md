@@ -102,9 +102,11 @@ The repo now includes a zero-dependency bootstrap path for the first milestone:
 
 - `docs/specs/v0.1-architecture.md` defines the system boundary and MVP
 - `docs/specs/adapter-mapping-codex.md` defines the first real runtime mapping
+- `docs/specs/adapter-mapping-openclaw.md` defines the first OpenClaw snapshot mapping
 - `packages/schema/turnscope-event.schema.json` defines the initial event envelope
 - `packages/adapters-codex/src/map_app_server.py` converts Codex app-server JSONL into canonical NDJSON
 - `packages/adapters-codex/src/eval_samples.py` checks adapter precision against committed golden samples
+- `packages/adapters-openclaw/src/map_session_store.py` converts OpenClaw session-store snapshots into canonical NDJSON
 - `apps/collector/src/collector.py` ingests sample NDJSON into local session files
 - `apps/collector/data/index.json` is generated as a local session catalog
 - `apps/web/` contains a static prototype dashboard with timeline, diff, shell, subagent, and collector-index views
@@ -130,6 +132,16 @@ To run the sample-driven precision loop for the Codex adapter:
 
 ```bash
 python3 packages/adapters-codex/src/eval_samples.py
+```
+
+For the OpenClaw session-store bootstrap adapter:
+
+```bash
+python3 packages/adapters-openclaw/src/map_session_store.py \
+  --input packages/adapters-openclaw/fixtures/sample-sessions-store.json \
+  --output /tmp/openclaw-store.ndjson
+
+python3 packages/adapters-openclaw/src/eval_samples.py
 ```
 
 ## Why not use existing tools?
@@ -217,6 +229,7 @@ If we can deliver that experience, this project will feel real immediately.
 - [x] build a tiny collector that stores sessions locally
 - [x] design the first zero-dependency UI around timeline plus process tree plus diff
 - [x] land the first Codex app-server bootstrap adapter
+- [x] land the first OpenClaw session-store bootstrap adapter
 
 ### Next
 

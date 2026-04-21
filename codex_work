@@ -444,3 +444,68 @@
 - 决定 `item/started:fileChange` 的 canonical 表达方式
 - 开始 OpenClaw adapter 的首版 fixture 和 mapping
 - 如本地端口权限获批，则补做 web prototype 的浏览器级验证
+
+================================================================
+
+时间：04月21日09时45分
+工作类型：OpenClaw bootstrap adapter + 真实样例验证
+
+计划：
+- 沿着和 Codex 相同的方法，把 OpenClaw 也推进到“样例驱动、可验证”的 bootstrap adapter 状态。
+- 优先选择官方文档里最稳定、最明确的数据面，而不是猜测未文档化的内部事件流。
+- 用 fixture + golden 输出把 OpenClaw 这条链路也纳入可回归状态。
+
+执行：
+- 基于官方文档整理 OpenClaw 的 bootstrap mapping：
+  - `docs/specs/adapter-mapping-openclaw.md`
+  - 明确当前最稳定的输入面是 gateway 的 session store：
+    - `~/.openclaw/agents/<agentId>/sessions/sessions.json`
+- 将 `packages/adapters-openclaw` 从占位说明升级为可运行包：
+  - `packages/adapters-openclaw/README.md`
+  - `packages/adapters-openclaw/fixtures/sample-sessions-store.json`
+  - `packages/adapters-openclaw/src/map_session_store.py`
+  - `packages/adapters-openclaw/src/eval_samples.py`
+  - `packages/adapters-openclaw/golden/sample-sessions-store.expected.ndjson`
+- 当前 OpenClaw adapter 的策略不是伪装成完整 turn-level event stream，而是明确声明为“session-store snapshot adapter”：
+  - 每个 session store entry 合成为 `session.started`
+  - 每个 session store entry 合成为 `session.finished`
+  - `session.finished.payload.status` 使用 `active_snapshot`，避免错误暗示“真实运行已结束”
+- 在实现中修复了一个排序精度问题：
+  - 对于没有 `createdAt`、只有 `updatedAt` 的 session，开始/结束事件时间相同
+  - 如果只按 `(occurred_at, id)` 排序，会出现 `session.finished` 排在 `session.started` 之前
+  - 现已在 `map_session_store.py` 中增加 type-order 排序，确保 `session.started` 永远先于 `session.finished`
+- 同步更新 `README.md`：
+  - 加入 OpenClaw adapter 的路径和 quickstart
+  - 将 OpenClaw bootstrap adapter 标记为已完成
+
+结果：
+- TurnScope 现在已经具备两条可验证的 runtime adapter 路径：
+  - Codex app-server adapter
+  - OpenClaw session-store bootstrap adapter
+- OpenClaw 这条链路虽然还不是完整事件流，但已经能把官方文档支持的稳定 session snapshot 数据，转换成 collector 可消费的 canonical event。
+- 项目从“单 runtime bootstrap”变成了“跨两个 runtime 的真实 bootstrap”。
+
+验证：
+- `python3 packages/adapters-openclaw/src/eval_samples.py` 通过：
+  - `sample-sessions-store.json -> 4 events`
+- adapter -> collector 链路通过：
+  - OpenClaw adapter 输出 4 条 TurnScope event
+  - collector 成功写出：
+    - `apps/collector/data/sessions/oc_sess_main_001.ndjson`
+    - `apps/collector/data/sessions/oc_sess_main_001.summary.json`
+    - `apps/collector/data/sessions/oc_sess_cron_001.ndjson`
+    - `apps/collector/data/sessions/oc_sess_cron_001.summary.json`
+    - `apps/collector/data/index.json`
+- 语法检查通过：
+  - `python3 -m py_compile packages/adapters-openclaw/src/map_session_store.py`
+  - `python3 -m py_compile packages/adapters-openclaw/src/eval_samples.py`
+
+风险 / 未决问题：
+- 当前 OpenClaw adapter 只覆盖 session-store snapshot，不覆盖 transcript JSONL、gateway logs、turn-level execution 或 tool-level行为。
+- `active_snapshot` 是一个谨慎但仍然合成的状态语义，后续如果拿到更稳定的 transcript / run-complete 信号，可能需要重新建模。
+- OpenClaw 的更细粒度事件流目前仍需要更多真实样例支撑，不能只靠文档猜。
+
+下一步计划：
+- 继续扩大 Codex fixture 集，尤其是更多 tool / approval / subagent 场景
+- 为 OpenClaw 补第二条输入面，优先考虑 gateway log JSON line 或 transcript JSONL 的真实样例
+- 如果本地端口权限获批，补做 web prototype 的浏览器级真实验证

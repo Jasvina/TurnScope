@@ -1,17 +1,35 @@
-# OpenClaw Adapter Contract
+# OpenClaw Adapter
 
-This package will translate OpenClaw-native sessions, gateway logs, or runtime events into the TurnScope canonical schema.
+This package starts with the most stable documented OpenClaw surface: the gateway session store snapshot.
 
-Early mapping targets:
+Current scope:
 
-- session lifecycle
-- agent and subagent activity
-- gateway or runtime errors
-- shell and tool activity where available
-- approval-like waits and control-plane pauses
+- consume `sessions.json`-style store snapshots
+- synthesize canonical TurnScope session events from documented store metadata
+- preserve token counters, origin metadata, and display labels in event attributes
 
-Suggested next additions:
+## Files
 
-- source inventory for Gateway, Dashboard, and session event surfaces
-- mapping examples from raw OpenClaw artifacts to canonical events
-- transport notes for files, WebSocket, or HTTP surfaces
+- `src/map_session_store.py` - snapshot-to-events adapter
+- `src/eval_samples.py` - fixture and golden regression runner
+- `fixtures/sample-sessions-store.json` - sample store snapshot
+- `golden/sample-sessions-store.expected.ndjson` - expected canonical output
+- `../../docs/specs/adapter-mapping-openclaw.md` - mapping rationale and limits
+
+## Try it
+
+```bash
+python3 packages/adapters-openclaw/src/map_session_store.py \
+  --input packages/adapters-openclaw/fixtures/sample-sessions-store.json \
+  --output /tmp/openclaw-store.ndjson
+
+python3 apps/collector/src/collector.py \
+  --input /tmp/openclaw-store.ndjson \
+  --outdir apps/collector/data
+```
+
+Run the precision check:
+
+```bash
+python3 packages/adapters-openclaw/src/eval_samples.py
+```

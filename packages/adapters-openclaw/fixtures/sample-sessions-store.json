@@ -1,0 +1,35 @@
+{
+  "agent:main:main": {
+    "sessionId": "oc_sess_main_001",
+    "createdAt": "2026-04-21T02:00:00Z",
+    "updatedAt": "2026-04-21T02:14:00Z",
+    "displayName": "Jasvina DM",
+    "channel": "telegram",
+    "inputTokens": 1500,
+    "outputTokens": 420,
+    "totalTokens": 1920,
+    "contextTokens": 6300,
+    "origin": {
+      "label": "Jasvina DM",
+      "provider": "telegram",
+      "from": "telegram:123456",
+      "to": "telegram:bot",
+      "accountId": "default"
+    }
+  },
+  "cron:daily-report": {
+    "sessionId": "oc_sess_cron_001",
+    "updatedAt": "2026-04-21T04:00:00Z",
+    "channel": "cron",
+    "inputTokens": 240,
+    "outputTokens": 96,
+    "totalTokens": 336,
+    "contextTokens": 1200,
+    "origin": {
+      "label": "Daily report",
+      "provider": "cron",
+      "from": "cron:daily-report",
+      "to": "agent:main"
+    }
+  }
+}
