@@ -1,8 +1,17 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Read the contributor guide
+    url: https://github.com/Jasvina/TurnScope/blob/main/CONTRIBUTING.md
+    about: Use this for contribution flow, scope, and verification expectations.
   - name: Read the architecture doc
     url: https://github.com/Jasvina/TurnScope/blob/main/docs/specs/v0.1-architecture.md
     about: Start here if your question is about project direction or the first milestone.
-  - name: Read codex_work
-    url: https://github.com/Jasvina/TurnScope/blob/main/codex_work
-    about: See the persistent work log before opening meta questions about current progress.
+  - name: Check public project status
+    url: https://github.com/Jasvina/TurnScope/blob/main/docs/progress/current-progress.md
+    about: Read the public progress snapshot before asking whether a feature is ready.
+  - name: Review the release checklist
+    url: https://github.com/Jasvina/TurnScope/blob/main/docs/community/release-checklist.md
+    about: Use this before filing packaging, demo, or announcement questions.
+  - name: Report a security issue
+    url: https://github.com/Jasvina/TurnScope/blob/main/SECURITY.md
+    about: Follow the security reporting guidance for sensitive findings.

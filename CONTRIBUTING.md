@@ -10,6 +10,8 @@ Please read these first:
 
 - `README.md`
 - `docs/specs/v0.1-architecture.md`
+- `docs/progress/current-progress.md`
+- `docs/community/release-checklist.md`
 - `codex_work`
 
 `codex_work` matters on purpose. It is the persistent handoff log for both humans and AI agents. If you make meaningful progress, update it.
@@ -58,6 +60,7 @@ If you change behavior:
 - prefer stable contracts over clever abstractions
 - add or update example traces when they help explain the change
 - add basic verification notes to `codex_work`
+- run `./scripts/verify.sh` before opening a pull request when your change touches code or shipped docs
 
 ## Validation
 
@@ -69,6 +72,12 @@ Examples:
 - verify generated summary files look correct
 - open the web prototype and confirm the layout renders
 - inspect that docs and example commands still make sense
+
+The standard project verification entrypoint is:
+
+```bash
+./scripts/verify.sh
+```
 
 ## Issues and proposals
 
@@ -89,3 +98,8 @@ When opening an issue, help us answer one of these quickly:
 ## License
 
 By contributing, you agree that your contributions will be licensed under the MIT License.
+
+## Community
+
+- `CODE_OF_CONDUCT.md`
+- `SECURITY.md`

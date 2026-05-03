@@ -19,6 +19,11 @@ body:
     validations:
       required: true
   - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What did you try, and why is this direction better?
+  - type: textarea
     id: evidence
     attributes:
       label: Evidence or motivating example

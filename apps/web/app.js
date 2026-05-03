@@ -135,11 +135,11 @@ const eventTypeFilter = document.getElementById('event-type-filter');
 const clearFilters = document.getElementById('clear-filters');
 let loadedSessionEvents = {};
 let loadedSessionSummaries = {};
-let loadedPackSummary = null;
 let currentSessionEvents = [];
 let visibleEvents = [];
 let activeSessionId = null;
 let activeEventIndex = 0;
+const EMPTY_PRETTY = 'Awaiting session data';
 const eventTypeOrder = {
   'session.started': 0,
   'turn.started': 10,
@@ -156,6 +156,25 @@ const eventTypeOrder = {
   'turn.finished': 90,
   'session.finished': 100,
 };
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&#39;';
+      default:
+        return char;
+    }
+  });
+}
 
 function eventSortKey(event) {
   return `${String(event.occurred_at)}|${String(eventTypeOrder[event.type] ?? 999).padStart(3, '0')}|${event.id}`;
@@ -229,6 +248,9 @@ function filteredEvents() {
 }
 
 function renderStats(events, summary) {
+  const shellCount = count(events, 'shell.started');
+  const fileCount = count(events, 'file.changed');
+  const subagentCount = count(events, 'subagent.spawned');
   const droppedCount = Number(summary?.dropped_event_count || 0);
   const cards = summary
     ? [
@@ -236,7 +258,10 @@ function renderStats(events, summary) {
         ['Events', String(summary.event_count || 0)],
         ['Turns', String(summary.turn_count || 0)],
         ['Tools', String(summary.tool_call_count || 0)],
+        ['Shells', String(summary.shell_count || shellCount)],
         ['Approvals', String(summary.approval_count || 0)],
+        ['Files', String(summary.file_change_count || fileCount)],
+        ['Delegations', String(summary.subagent_count || subagentCount)],
         ['Dropped', String(droppedCount)],
       ]
     : [
@@ -244,15 +269,18 @@ function renderStats(events, summary) {
         ['Events', String(events.length)],
         ['Turns', String(count(events, 'turn.started'))],
         ['Tools', String(count(events, 'tool.called'))],
+        ['Shells', String(shellCount)],
         ['Approvals', String(count(events, 'approval.requested'))],
+        ['Files', String(fileCount)],
+        ['Delegations', String(subagentCount)],
         ['Dropped', '0'],
       ];
   stats.innerHTML = cards
     .map(
       ([label, value]) => `
         <div class="stat">
-          <small>${label}</small>
-          <strong>${value}</strong>
+          <small>${escapeHtml(label)}</small>
+          <strong>${escapeHtml(value)}</strong>
         </div>
       `,
     )
@@ -303,6 +331,10 @@ function detailText(event) {
   return JSON.stringify(event.payload);
 }
 
+function selectedVisibleEvent() {
+  return visibleEvents[activeEventIndex] || visibleEvents[0] || null;
+}
+
 function renderTimeline(events, totalCount = events.length) {
   visibleEvents = events;
   activeEventIndex = 0;
@@ -313,16 +345,16 @@ function renderTimeline(events, totalCount = events.length) {
           const className = event.type.replace('.', '-');
           return `
             <button class="timeline-item ${className} ${index === 0 ? 'active' : ''}" data-event-index="${index}">
-              <div class="timeline-meta">${event.occurred_at}<br />${humanType(event.type)}</div>
+              <div class="timeline-meta">${escapeHtml(event.occurred_at)}<br />${escapeHtml(humanType(event.type))}</div>
               <div>
-                <strong>${detailText(event)}</strong>
-                <div class="timeline-meta">agent: ${event.agent_id || 'n/a'} | runtime: ${event.source.runtime}</div>
+                <strong>${escapeHtml(detailText(event))}</strong>
+                <div class="timeline-meta">agent: ${escapeHtml(event.agent_id || 'n/a')} | runtime: ${escapeHtml(event.source.runtime || 'n/a')}</div>
               </div>
             </button>
           `;
         })
         .join('')
-    : '<div class="timeline-item"><div><strong>No events loaded</strong></div></div>';
+    : `<div class="timeline-item"><div><strong>${EMPTY_PRETTY}</strong><div class="timeline-meta">Load a sample trace or paste NDJSON to begin.</div></div></div>`;
 }
 
 function renderProcessTree(events) {
@@ -338,16 +370,16 @@ function renderProcessTree(events) {
           );
           return `
             <div class="process-node">
-              <strong>${event.payload.command}</strong>
-              <small>shell id: ${event.payload.shell_id}</small>
-              <small>parent shell: ${(event.attributes || {}).parent_shell_id || 'root'}</small>
-              <small>exit: ${finished ? finished.payload.exit_code : 'running'}</small>
-              <small>output chunks: ${outputs.length}</small>
+              <strong>${escapeHtml(event.payload.command || '(no command)')}</strong>
+              <small>shell id: ${escapeHtml(event.payload.shell_id || 'n/a')}</small>
+              <small>parent shell: ${escapeHtml((event.attributes || {}).parent_shell_id || 'root')}</small>
+              <small>exit: ${escapeHtml(finished ? finished.payload.exit_code : 'running')}</small>
+              <small>output chunks: ${escapeHtml(outputs.length)}</small>
             </div>
           `;
         })
         .join('')
-    : '<div class="process-node"><strong>No shell activity</strong></div>';
+    : '<div class="process-node"><strong>No shell activity</strong><small>Commands will appear here when a session records shell launches.</small></div>';
 }
 
 function renderDiffs(events) {
@@ -357,30 +389,33 @@ function renderDiffs(events) {
         .map(
           (event) => `
             <div class="diff-item">
-              <strong>${event.payload.path || '(multiple files)'}</strong>
-              <small>${event.payload.summary || event.payload.status || 'change recorded'}</small>
-              <small>changes: ${event.payload.changes ? event.payload.changes.length : 1}</small>
+              <strong>${escapeHtml(event.payload.path || '(multiple files)')}</strong>
+              <small>${escapeHtml(event.payload.summary || event.payload.status || 'change recorded')}</small>
+              <small>changes: ${escapeHtml(event.payload.changes ? event.payload.changes.length : 1)}</small>
             </div>
           `,
         )
         .join('')
-    : '<div class="diff-item"><strong>No file changes</strong></div>';
+    : '<div class="diff-item"><strong>No file changes</strong><small>Diff evidence will surface here after the first edit event.</small></div>';
 }
 
 function renderAgentGraph(events) {
   const subagents = events.filter((event) => event.type === 'subagent.spawned');
   const lead = events.find((event) => event.agent_id)?.agent_id || 'lead';
-  const nodes = [`<div class="agent-node lead"><strong>${lead}</strong><small>primary agent</small></div>`];
+  const nodes = [`<div class="agent-node lead"><strong>${escapeHtml(lead)}</strong><small>primary agent</small></div>`];
   subagents.forEach((event) => {
     nodes.push(
-      `<div class="agent-node child"><strong>${event.payload.child_agent_id}</strong><small>${event.payload.role || event.payload.tool || 'child agent'}</small></div>`,
+      `<div class="agent-node child"><strong>${escapeHtml(event.payload.child_agent_id || 'child agent')}</strong><small>${escapeHtml(event.payload.role || event.payload.tool || 'child agent')}</small></div>`,
     );
   });
-  agentGraph.innerHTML = nodes.join('');
+  agentGraph.innerHTML = nodes.length
+    ? nodes.join('')
+    : '<div class="agent-node lead"><strong>No delegation yet</strong><small>Subagent hops will appear once a run fans out.</small></div>';
 }
 
 function renderRaw(events) {
-  rawView.textContent = JSON.stringify(events[0] || {}, null, 2);
+  const event = selectedVisibleEvent();
+  rawView.textContent = JSON.stringify(event || {}, null, 2);
 }
 
 function selectEvent(index) {
@@ -395,40 +430,25 @@ function selectEvent(index) {
 function renderCatalog(indexData) {
   if (!indexData) {
     catalogLabel.textContent = 'No index loaded';
-    catalogList.innerHTML = '<div class="catalog-item"><strong>Load a collector `index.json` or `*.summary.json` file.</strong></div>';
+    catalogList.innerHTML = '<div class="catalog-item"><strong>Load a collector `index.json` or `*.summary.json` file.</strong><small>Session summaries will appear here for quick switching.</small></div>';
     return;
   }
   const sessions = Array.isArray(indexData.sessions) ? indexData.sessions : [indexData];
-  const packSummary = indexData.summary || null;
   const totalDropped = Number(
-    packSummary?.dropped_event_count ??
-      indexData.dropped_event_count ??
+    indexData.dropped_event_count ??
       sessions.reduce((sum, session) => sum + Number(session.dropped_event_count || 0), 0),
   );
-  const totalEvents = Number(
-    packSummary?.event_count ??
-      sessions.reduce((sum, session) => sum + Number(session.event_count || 0), 0),
-  );
-  const runtimeCount = Array.isArray(packSummary?.runtimes) ? packSummary.runtimes.length : 0;
-  const labelParts = [
-    countLabel(sessions.length, 'session summary'),
-    countLabel(totalEvents, 'event'),
-    countLabel(totalDropped, 'dropped invalid event'),
-  ];
-  if (runtimeCount) {
-    labelParts.push(countLabel(runtimeCount, 'runtime'));
-  }
-  catalogLabel.textContent = labelParts.join(' · ');
+  catalogLabel.textContent = `${countLabel(sessions.length, 'session summary')} · ${countLabel(totalDropped, 'dropped invalid event')}`;
   catalogList.innerHTML = sessions
     .map(
       (session, position) => `
         <button class="catalog-item ${activeSessionId === (session.session_id || '') || (!activeSessionId && position === 0) ? 'active' : ''}" data-session-id="${session.session_id || ''}">
-          <strong>${session.session_id || 'unknown session'}</strong>
-          <small>status: ${session.status || 'unknown'}</small>
-          <small>events: ${session.event_count || 0}</small>
-          <small>turns: ${session.turn_count || 0}</small>
-          <small>dropped invalid events: ${session.dropped_event_count || 0}</small>
-          <small>bundle: ${session.bundle_path || session.log_path || '(summary only)'}</small>
+          <strong>${escapeHtml(session.session_id || 'unknown session')}</strong>
+          <small>status: ${escapeHtml(session.status || 'unknown')}</small>
+          <small>events: ${escapeHtml(session.event_count || 0)}</small>
+          <small>turns: ${escapeHtml(session.turn_count || 0)}</small>
+          <small>dropped invalid events: ${escapeHtml(session.dropped_event_count || 0)}</small>
+          <small>bundle: ${escapeHtml(session.bundle_path || session.log_path || '(summary only)')}</small>
         </button>
       `,
     )
@@ -459,7 +479,6 @@ function handleLoadedText(text) {
   if (trimmed.startsWith('{')) {
     const parsed = JSON.parse(trimmed);
     if (parsed.kind === 'turnscope.session.pack' && Array.isArray(parsed.sessions)) {
-      loadedPackSummary = parsed.summary || null;
       loadedSessionEvents = Object.fromEntries(
         parsed.sessions.map((session) => [session.summary.session_id, session.events]),
       );
@@ -467,17 +486,13 @@ function handleLoadedText(text) {
         parsed.sessions.map((session) => [session.summary.session_id, session.summary]),
       );
       activeSessionId = parsed.sessions[0]?.summary?.session_id || null;
-      renderCatalog({
-        summary: loadedPackSummary,
-        sessions: parsed.sessions.map((session) => session.summary),
-      });
+      renderCatalog({ sessions: parsed.sessions.map((session) => session.summary) });
       if (activeSessionId) {
         renderEvents(loadedSessionEvents[activeSessionId], parsed.sessions[0].summary);
       }
       return;
     }
     if (parsed.kind === 'turnscope.session.bundle' && parsed.summary && Array.isArray(parsed.events)) {
-      loadedPackSummary = null;
       loadedSessionEvents = { [parsed.summary.session_id]: parsed.events };
       loadedSessionSummaries = { [parsed.summary.session_id]: parsed.summary };
       activeSessionId = parsed.summary.session_id;
@@ -486,7 +501,6 @@ function handleLoadedText(text) {
       return;
     }
     if (Array.isArray(parsed.sessions) || parsed.session_id) {
-      loadedPackSummary = null;
       loadedSessionEvents = {};
       loadedSessionSummaries = Array.isArray(parsed.sessions)
         ? Object.fromEntries(parsed.sessions.map((session) => [session.session_id, session]))
@@ -497,7 +511,6 @@ function handleLoadedText(text) {
       return;
     }
   }
-  loadedPackSummary = null;
   loadedSessionEvents = {};
   loadedSessionSummaries = {};
   activeSessionId = null;
@@ -507,7 +520,6 @@ function handleLoadedText(text) {
 
 document.getElementById('load-sample').addEventListener('click', () => {
   input.value = toNdjson(sampleEvents);
-  loadedPackSummary = null;
   loadedSessionEvents = { sess_demo: sampleEvents };
   loadedSessionSummaries = {
     sess_demo: {
@@ -517,7 +529,6 @@ document.getElementById('load-sample').addEventListener('click', () => {
       turn_count: 1,
       tool_call_count: 1,
       approval_count: 1,
-      dropped_event_count: 0,
       log_path: 'sample/in-memory',
     },
   };
@@ -599,7 +610,6 @@ clearFilters.addEventListener('click', () => {
 });
 
 input.value = toNdjson(sampleEvents);
-loadedPackSummary = null;
 loadedSessionEvents = { sess_demo: sampleEvents };
 loadedSessionSummaries = {
   sess_demo: {

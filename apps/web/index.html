@@ -3,47 +3,84 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="TurnScope is a local-first observability prototype for reading coding-agent runs as timelines, trees, diffs, and delegations."
+    />
     <title>TurnScope Prototype</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="grain"></div>
+    <div class="page-noise" aria-hidden="true"></div>
+    <div class="page-glow page-glow-a" aria-hidden="true"></div>
+    <div class="page-glow page-glow-b" aria-hidden="true"></div>
+
     <main class="shell">
-      <header class="hero">
-        <div>
-          <p class="kicker">Local-first coding-agent observability</p>
-          <h1>TurnScope Prototype</h1>
+      <section class="hero panel">
+        <div class="hero-copy">
+          <p class="eyebrow">TurnScope / open-source runtime observability</p>
+          <h1>Read agent runs like a designed artifact, not a terminal accident.</h1>
           <p class="lede">
-            A paper-and-steel dashboard for reading sessions, tool calls, shell trees,
-            file diffs, approvals, and subagent hops without losing the plot.
+            TurnScope turns coding-agent sessions into a browsable evidence surface:
+            timelines, shell trees, diffs, approvals, and subagent hops — all local,
+            static, and easy to publish.
           </p>
+          <div class="hero-actions">
+            <button id="load-sample" class="primary">Load sample trace</button>
+            <button id="render-input" class="secondary">Render input</button>
+            <button id="load-file" class="ghost">Load file</button>
+            <input id="file-input" type="file" hidden />
+          </div>
+          <div class="hero-metadata">
+            <span>Zero dependency</span>
+            <span>Static prototype</span>
+            <span>Publisher-ready layout</span>
+          </div>
         </div>
-        <div class="hero-badge">
-          <span>v0.1 shape</span>
+
+        <aside class="hero-card">
+          <span class="hero-card-label">Current shape</span>
           <strong>Timeline + Process + Diff + Graph</strong>
-        </div>
-      </header>
+          <p>
+            A compact reading room for local session replay, built to make the first
+            TurnScope demo feel credible to the open-source community.
+          </p>
+          <div class="hero-card-foot">
+            <span>v0.1 bootstrap</span>
+            <span>Offline-friendly</span>
+          </div>
+        </aside>
+      </section>
 
-      <section class="stats" id="stats"></section>
+      <section class="stats" id="stats" aria-label="Session overview"></section>
 
-      <section class="board">
+      <section class="workspace" aria-label="TurnScope prototype surface">
         <article class="panel ingest-panel">
           <div class="panel-head">
-            <h2>Ingest Console</h2>
-            <div class="actions">
-              <button id="load-sample">Load sample</button>
-              <button id="render-input">Render input</button>
-              <button id="load-file">Load file</button>
-              <input id="file-input" type="file" hidden />
+            <div>
+              <p class="section-tag">01 / ingest</p>
+              <h2>Event Console</h2>
             </div>
+            <p class="panel-note">Paste NDJSON, a bundle, or an index file.</p>
           </div>
-          <textarea id="event-input" spellcheck="false"></textarea>
-          <p class="hint">Paste NDJSON events here, or load collector output such as `index.json`, `*.summary.json`, or `*.ndjson`.</p>
+          <textarea
+            id="event-input"
+            spellcheck="false"
+            aria-label="Paste NDJSON events, bundles, or index files"
+            placeholder="Drop NDJSON or bundle JSON here..."
+          ></textarea>
+          <p class="hint">
+            Load a generated `index.json`, `*.summary.json`, `*.bundle.json`, or a
+            raw `*.ndjson` trace.
+          </p>
         </article>
 
         <article class="panel timeline-panel">
           <div class="panel-head">
-            <h2>Timeline</h2>
+            <div>
+              <p class="section-tag">02 / timeline</p>
+              <h2>Session Timeline</h2>
+            </div>
             <span id="timeline-label">0 events</span>
           </div>
           <div class="filter-bar">
@@ -51,14 +88,17 @@
             <select id="event-type-filter" aria-label="Filter event type">
               <option value="">All event types</option>
             </select>
-            <button id="clear-filters">Clear filters</button>
+            <button id="clear-filters" class="secondary">Clear filters</button>
           </div>
           <div class="timeline" id="timeline"></div>
         </article>
 
         <article class="panel catalog-panel">
           <div class="panel-head">
-            <h2>Collector Index</h2>
+            <div>
+              <p class="section-tag">03 / catalog</p>
+              <h2>Collector Index</h2>
+            </div>
             <span id="catalog-label">No index loaded</span>
           </div>
           <div class="catalog-list" id="catalog-list"></div>
@@ -66,7 +106,10 @@
 
         <article class="panel process-panel">
           <div class="panel-head">
-            <h2>Shell Process Tree</h2>
+            <div>
+              <p class="section-tag">04 / process</p>
+              <h2>Shell Process Tree</h2>
+            </div>
             <span>Command lineage</span>
           </div>
           <div class="process-tree" id="process-tree"></div>
@@ -74,7 +117,10 @@
 
         <article class="panel diff-panel">
           <div class="panel-head">
-            <h2>Diff Timeline</h2>
+            <div>
+              <p class="section-tag">05 / evidence</p>
+              <h2>Diff Timeline</h2>
+            </div>
             <span>Turn-by-turn file evidence</span>
           </div>
           <div class="diff-list" id="diff-list"></div>
@@ -82,7 +128,10 @@
 
         <article class="panel graph-panel">
           <div class="panel-head">
-            <h2>Subagent Graph</h2>
+            <div>
+              <p class="section-tag">06 / delegation</p>
+              <h2>Subagent Graph</h2>
+            </div>
             <span>Delegation map</span>
           </div>
           <div class="agent-graph" id="agent-graph"></div>
@@ -90,13 +139,17 @@
 
         <article class="panel raw-panel">
           <div class="panel-head">
-            <h2>Raw Event Lens</h2>
+            <div>
+              <p class="section-tag">07 / raw</p>
+              <h2>Raw Event Lens</h2>
+            </div>
             <span>Selected canonical event</span>
           </div>
           <pre id="raw-view"></pre>
         </article>
       </section>
     </main>
+
     <script src="app.js"></script>
   </body>
 </html>

@@ -19,6 +19,11 @@ body:
     validations:
       required: true
   - type: textarea
+    id: docs
+    attributes:
+      label: Source docs or logs
+      description: Link the runtime docs, logs, or sample captures that explain the event source.
+  - type: textarea
     id: events
     attributes:
       label: Event sources available

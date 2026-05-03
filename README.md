@@ -1,6 +1,7 @@
 # TurnScope
 
 ![Status](https://img.shields.io/badge/status-pre--alpha-f59e0b)
+![CI](https://github.com/Jasvina/TurnScope/actions/workflows/ci.yml/badge.svg)
 ![Focus](https://img.shields.io/badge/focus-coding%20agent%20observability-2563eb)
 ![Architecture](https://img.shields.io/badge/architecture-local--first-0f766e)
 ![Runtime](https://img.shields.io/badge/runtime-cross--runtime-7c3aed)
@@ -144,17 +145,13 @@ python3 packages/adapters-codex/src/eval_samples.py
 
 Then load either one generated `apps/collector/data/bundles/*.bundle.json` file or the full `apps/collector/data/bundles/session-pack.json` file into `apps/web`.
 
-To demo dropped invalid-event accounting end to end:
+For current progress and planned optimization work, see [`docs/progress/current-progress.md`](docs/progress/current-progress.md).
+
+To run the full local verification pass used for release and CI:
 
 ```bash
-python3 apps/collector/src/collector.py \
-  --input packages/schema/examples/dropped-events-session.ndjson \
-  --outdir /tmp/turnscope_dropped_demo
+./scripts/verify.sh
 ```
-
-Then load `/tmp/turnscope_dropped_demo/bundles/session-pack.json` into `apps/web` and confirm the catalog plus session stats both show one dropped invalid event.
-
-For current progress and planned optimization work, see [`docs/progress/current-progress.md`](docs/progress/current-progress.md).
 
 For the OpenClaw session-store bootstrap adapter:
 
@@ -301,7 +298,14 @@ Start with:
 
 - `CONTRIBUTING.md`
 - `docs/specs/v0.1-architecture.md`
-- `codex_work`
+- `docs/progress/current-progress.md`
+- `docs/community/release-checklist.md`
+- `CODE_OF_CONDUCT.md`
+
+If you are preparing screenshots, a demo, or a release announcement, also see:
+
+- `docs/community/screenshots-guide.md`
+- `SECURITY.md`
 
 ## Project status
 

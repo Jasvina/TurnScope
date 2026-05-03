@@ -4,6 +4,25 @@ title: "[Bug] "
 labels:
   - bug
 body:
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: What commit, tag, or local state were you testing?
+      placeholder: main @ abc1234
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Share the runtime, OS, browser, and anything else that changes the bug.
+      placeholder: |
+        Runtime: Codex / OpenClaw / other
+        OS: macOS / Linux / Windows
+        Browser: Chrome / Safari / Firefox
+    validations:
+      required: true
   - type: textarea
     id: summary
     attributes:
@@ -50,4 +69,4 @@ body:
     id: trace
     attributes:
       label: Sample event or trace snippet
-      description: Paste a redacted snippet if it helps.
+      description: Paste a redacted snippet, screenshot, or log excerpt if it helps.
