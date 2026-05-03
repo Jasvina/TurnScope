@@ -172,10 +172,6 @@ Current Codex adapter capabilities:
 - tracks mapped and unmapped methods by `method + item.type`
 - runs fixture-vs-golden precision checks
 
-Known Codex gap:
-
-- `item/started:fileChange` is explicitly allowed in `expected_gaps.json` until a final canonical mapping decision is made.
-
 ### OpenClaw adapter
 
 - `packages/adapters-openclaw/src/map_session_store.py`
@@ -241,7 +237,6 @@ Not complete yet:
 
 - collect more real Codex app-server JSONL samples
 - add more fixture and golden pairs
-- decide final handling for `item/started:fileChange`
 - add token usage, plan updates, diff updates, and model reroute events once their canonical representation is clear
 - expand OpenClaw beyond session-store snapshots using real transcript or gateway-log samples
 

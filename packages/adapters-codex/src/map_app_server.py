@@ -303,7 +303,7 @@ def map_messages_with_report(messages: Iterable[Dict[str, Any]]) -> Tuple[List[D
                 ),
             )
             handled = True
-        elif method == 'item/completed' and item.get('type') == 'fileChange':
+        elif method in {'item/started', 'item/completed'} and item.get('type') == 'fileChange':
             changes = item.get('changes', [])
             primary_path = changes[0].get('path') if changes else None
             add_event(
@@ -323,7 +323,10 @@ def map_messages_with_report(messages: Iterable[Dict[str, Any]]) -> Tuple[List[D
                     },
                     component='diff',
                     event_id_value=item.get('id'),
-                    attributes={'change_count': len(changes)},
+                    attributes={
+                        'change_count': len(changes),
+                        'phase': 'started' if method == 'item/started' else 'completed',
+                    },
                     occurred_at=occurred_at,
                 ),
             )
