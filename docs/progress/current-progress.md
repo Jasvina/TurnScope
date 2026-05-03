@@ -112,12 +112,14 @@ Current collector capabilities:
 
 - reads NDJSON or JSON-array event input
 - validates required fields
+- drops invalid events while continuing the ingest batch
 - groups events by `session_id`
 - writes per-session event logs
 - writes per-session summary files
 - writes per-session bundle files
 - writes a multi-session `session-pack.json`
 - writes `index.json`
+- records dropped-event counts in summaries and in `index.json`
 - applies canonical event ordering when timestamps are equal
 
 Current collector outputs:
@@ -243,7 +245,6 @@ Not complete yet:
 
 ### 2. Collector robustness
 
-- add dropped-event accounting to `index.json`
 - add schema validation mode
 - add redaction profiles before sharing bundles
 - support append mode across repeated ingest runs

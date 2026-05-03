@@ -8,7 +8,7 @@ import json
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, List, Dict, Any
+from typing import Iterable, List, Dict, Any, Optional
 
 REQUIRED_FIELDS = ["version", "id", "type", "occurred_at", "session_id", "source", "payload"]
 EVENT_TYPE_ORDER = {
@@ -67,7 +67,25 @@ def validate_event(event: Dict[str, Any]) -> Iterable[str]:
         yield "source must be an object"
 
 
-def summarize(events: List[Dict[str, Any]], log_path: Path, summary_path: Path) -> Dict[str, Any]:
+def dropped_event_entries(counts: Counter[Optional[str]]) -> List[Dict[str, Any]]:
+    return [
+        {"session_id": session_id, "count": count}
+        for session_id, count in sorted(
+            counts.items(),
+            key=lambda item: (
+                item[0] is None,
+                "" if item[0] is None else item[0],
+            ),
+        )
+    ]
+
+
+def summarize(
+    events: List[Dict[str, Any]],
+    log_path: Path,
+    summary_path: Path,
+    dropped_event_count: int = 0,
+) -> Dict[str, Any]:
     counts = Counter(event["type"] for event in events)
     runtimes = sorted({event.get("source", {}).get("runtime", "unknown") for event in events})
     return {
@@ -86,6 +104,7 @@ def summarize(events: List[Dict[str, Any]], log_path: Path, summary_path: Path) 
         "approval_count": counts.get("approval.requested", 0),
         "subagent_count": counts.get("subagent.spawned", 0),
         "error_count": counts.get("error.raised", 0),
+        "dropped_event_count": dropped_event_count,
         "log_path": str(log_path),
         "summary_path": str(summary_path),
     }
@@ -101,12 +120,18 @@ def infer_status(events: List[Dict[str, Any]]) -> str:
     return "incomplete"
 
 
-def write_index(outdir: Path, summaries: List[Dict[str, Any]]) -> Path:
+def write_index(
+    outdir: Path,
+    summaries: List[Dict[str, Any]],
+    dropped_counts: Counter[Optional[str]],
+) -> Path:
     index_path = outdir / "index.json"
     payload = {
         "version": "0.1.0",
         "generated_at": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
         "session_count": len(summaries),
+        "dropped_event_count": sum(dropped_counts.values()),
+        "dropped_events_by_session": dropped_event_entries(dropped_counts),
         "sessions": sorted(summaries, key=lambda summary: summary["last_timestamp"], reverse=True),
     }
     index_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
@@ -141,7 +166,11 @@ def write_pack(outdir: Path, sessions: List[Dict[str, Any]]) -> Path:
     return pack_path
 
 
-def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
+def write_sessions(
+    events: List[Dict[str, Any]],
+    outdir: Path,
+    dropped_counts: Optional[Counter[Optional[str]]] = None,
+) -> List[Path]:
     grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
     for event in events:
         grouped[event["session_id"]].append(event)
@@ -151,6 +180,7 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
     written = []
     summaries = []
     packs = []
+    dropped_counts = dropped_counts or Counter()
 
     for session_id, session_events in grouped.items():
         session_events.sort(key=event_sort_key)
@@ -159,7 +189,12 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
         with log_path.open("w", encoding="utf-8") as handle:
             for event in session_events:
                 handle.write(json.dumps(event, ensure_ascii=True) + "\n")
-        summary = summarize(session_events, log_path.relative_to(outdir), summary_path.relative_to(outdir))
+        summary = summarize(
+            session_events,
+            log_path.relative_to(outdir),
+            summary_path.relative_to(outdir),
+            dropped_event_count=dropped_counts.get(session_id, 0),
+        )
         summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
         bundle_path = write_bundle(outdir, summary, session_events)
         summary["bundle_path"] = str(bundle_path.relative_to(outdir))
@@ -168,7 +203,7 @@ def write_sessions(events: List[Dict[str, Any]], outdir: Path) -> List[Path]:
         packs.append({"summary": summary, "events": session_events})
         written.extend([log_path, summary_path, bundle_path])
 
-    index_path = write_index(outdir, summaries)
+    index_path = write_index(outdir, summaries, dropped_counts)
     written.append(index_path)
     pack_path = write_pack(outdir, packs)
     written.append(pack_path)
@@ -190,15 +225,17 @@ def main() -> int:
         return 0
 
     errors = []
+    dropped_counts: Counter[Optional[str]] = Counter()
     valid_events = []
     for event in events:
         problems = list(validate_event(event))
         if problems:
             errors.append({"event": event.get("id", "unknown"), "problems": problems})
+            dropped_counts[event.get("session_id")] += 1
             continue
         valid_events.append(event)
 
-    written = write_sessions(valid_events, outdir)
+    written = write_sessions(valid_events, outdir, dropped_counts)
 
     print(f"Loaded {len(events)} events from {input_path}")
     print(f"Stored {len(valid_events)} valid events")
