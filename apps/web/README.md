@@ -32,6 +32,7 @@ Current load modes:
 Current inspection features:
 
 - session picker for multi-session packs
+- dropped invalid-event counts in summary stats and collector catalog views
 - timeline search across type, payload, attributes, command, file, and agent fields
 - event-type filtering
 - clickable timeline rows that drive the Raw Event Lens

@@ -184,6 +184,11 @@ function count(events, type) {
   return events.filter((event) => event.type === type).length;
 }
 
+function countLabel(value, singular, plural = `${singular}s`) {
+  const countValue = Number(value || 0);
+  return `${countValue} ${countValue === 1 ? singular : plural}`;
+}
+
 function searchableEventText(event) {
   return [
     event.type,
@@ -223,6 +228,7 @@ function filteredEvents() {
 }
 
 function renderStats(events, summary) {
+  const droppedCount = Number(summary?.dropped_event_count || 0);
   const cards = summary
     ? [
         ['Session', summary.session_id || 'n/a'],
@@ -230,6 +236,7 @@ function renderStats(events, summary) {
         ['Turns', String(summary.turn_count || 0)],
         ['Tools', String(summary.tool_call_count || 0)],
         ['Approvals', String(summary.approval_count || 0)],
+        ['Dropped', String(droppedCount)],
       ]
     : [
         ['Session', events[0]?.session_id || 'n/a'],
@@ -237,6 +244,7 @@ function renderStats(events, summary) {
         ['Turns', String(count(events, 'turn.started'))],
         ['Tools', String(count(events, 'tool.called'))],
         ['Approvals', String(count(events, 'approval.requested'))],
+        ['Dropped', '0'],
       ];
   stats.innerHTML = cards
     .map(
@@ -390,7 +398,11 @@ function renderCatalog(indexData) {
     return;
   }
   const sessions = Array.isArray(indexData.sessions) ? indexData.sessions : [indexData];
-  catalogLabel.textContent = `${sessions.length} session summaries`;
+  const totalDropped = Number(
+    indexData.dropped_event_count ??
+      sessions.reduce((sum, session) => sum + Number(session.dropped_event_count || 0), 0),
+  );
+  catalogLabel.textContent = `${countLabel(sessions.length, 'session summary')} · ${countLabel(totalDropped, 'dropped invalid event')}`;
   catalogList.innerHTML = sessions
     .map(
       (session, position) => `
@@ -399,6 +411,7 @@ function renderCatalog(indexData) {
           <small>status: ${session.status || 'unknown'}</small>
           <small>events: ${session.event_count || 0}</small>
           <small>turns: ${session.turn_count || 0}</small>
+          <small>dropped invalid events: ${session.dropped_event_count || 0}</small>
           <small>bundle: ${session.bundle_path || session.log_path || '(summary only)'}</small>
         </button>
       `,
@@ -480,6 +493,7 @@ document.getElementById('load-sample').addEventListener('click', () => {
       turn_count: 1,
       tool_call_count: 1,
       approval_count: 1,
+      dropped_event_count: 0,
       log_path: 'sample/in-memory',
     },
   };
@@ -493,6 +507,7 @@ document.getElementById('load-sample').addEventListener('click', () => {
         turn_count: 1,
         tool_call_count: 1,
         approval_count: 1,
+        dropped_event_count: 0,
         log_path: 'sample/in-memory',
       },
     ],
@@ -569,6 +584,7 @@ loadedSessionSummaries = {
     turn_count: 1,
     tool_call_count: 1,
     approval_count: 1,
+    dropped_event_count: 0,
     log_path: 'sample/in-memory',
   },
 };
@@ -582,6 +598,7 @@ renderCatalog({
       turn_count: 1,
       tool_call_count: 1,
       approval_count: 1,
+      dropped_event_count: 0,
       log_path: 'sample/in-memory',
     },
   ],
