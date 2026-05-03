@@ -119,6 +119,7 @@ Current collector capabilities:
 - writes per-session summary files
 - writes per-session bundle files
 - writes a multi-session `session-pack.json`
+- writes aggregate pack metadata into `session-pack.json`
 - writes `index.json`
 - records dropped-event counts in summaries and in `index.json`
 - applies canonical event ordering when timestamps are equal
@@ -248,7 +249,6 @@ Not complete yet:
 
 - add schema validation mode
 - add redaction profiles before sharing bundles
-- support multi-session pack metadata and pack summaries
 
 ### 3. Web inspection
 

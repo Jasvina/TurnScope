@@ -229,6 +229,103 @@ class CollectorDroppedEventAccountingTests(unittest.TestCase):
                 ],
             )
 
+    def test_session_pack_writes_aggregate_summary_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmp_path = Path(tmpdir)
+            outdir = tmp_path / "out"
+            first_input = tmp_path / "first.ndjson"
+            second_input = tmp_path / "second.ndjson"
+
+            first_input.write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "version": "0.1.0",
+                                "id": "evt_valid_1",
+                                "type": "session.started",
+                                "occurred_at": "2026-04-21T00:00:00Z",
+                                "session_id": "sess_a",
+                                "agent_id": "lead",
+                                "source": {
+                                    "runtime": "codex",
+                                    "component": "session",
+                                    "origin": "test",
+                                },
+                                "payload": {"task": "a"},
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "version": "0.1.0",
+                                "id": "evt_valid_2",
+                                "type": "session.finished",
+                                "occurred_at": "2026-04-21T00:00:01Z",
+                                "session_id": "sess_a",
+                                "agent_id": "lead",
+                                "source": {
+                                    "runtime": "codex",
+                                    "component": "session",
+                                    "origin": "test",
+                                },
+                                "payload": {"status": "completed"},
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self.run_collector(first_input, outdir)
+
+            second_input.write_text(
+                "\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "version": "0.1.0",
+                                "id": "evt_valid_3",
+                                "type": "session.started",
+                                "occurred_at": "2026-04-21T00:00:02Z",
+                                "session_id": "sess_b",
+                                "agent_id": "lead",
+                                "source": {
+                                    "runtime": "openclaw",
+                                    "component": "session",
+                                    "origin": "test",
+                                },
+                                "payload": {"task": "b"},
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "version": "0.1.0",
+                                "id": "evt_invalid_1",
+                                "type": "turn.started",
+                                "occurred_at": "2026-04-21T00:00:03Z",
+                                "session_id": "sess_b",
+                                "agent_id": "lead",
+                                "source": {
+                                    "runtime": "openclaw",
+                                    "component": "turn",
+                                    "origin": "test",
+                                },
+                            }
+                        ),
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            self.run_collector(second_input, outdir, append=True)
+
+            pack = json.loads((outdir / "bundles" / "session-pack.json").read_text(encoding="utf-8"))
+            self.assertEqual(pack["kind"], "turnscope.session.pack")
+            self.assertEqual(pack["summary"]["session_count"], 2)
+            self.assertEqual(pack["summary"]["event_count"], 3)
+            self.assertEqual(pack["summary"]["dropped_event_count"], 1)
+            self.assertEqual(pack["summary"]["runtimes"], ["codex", "openclaw"])
+
 
 if __name__ == "__main__":
     unittest.main()

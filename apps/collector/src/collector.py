@@ -190,10 +190,26 @@ def write_pack(outdir: Path, sessions: List[Dict[str, Any]]) -> Path:
     bundles_dir = outdir / "bundles"
     bundles_dir.mkdir(parents=True, exist_ok=True)
     pack_path = bundles_dir / "session-pack.json"
+    summaries = [session["summary"] for session in sessions]
+    event_count = sum(summary.get("event_count", 0) for summary in summaries)
+    dropped_event_count = sum(summary.get("dropped_event_count", 0) for summary in summaries)
+    runtimes = sorted(
+        {
+            runtime
+            for summary in summaries
+            for runtime in summary.get("runtimes", [])
+        }
+    )
     payload = {
         "version": "0.1.0",
         "kind": "turnscope.session.pack",
         "generated_at": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+        "summary": {
+            "session_count": len(summaries),
+            "event_count": event_count,
+            "dropped_event_count": dropped_event_count,
+            "runtimes": runtimes,
+        },
         "sessions": sessions,
     }
     pack_path.write_text(json.dumps(payload, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")

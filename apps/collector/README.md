@@ -12,6 +12,7 @@ Current prototype:
 - writes one summary JSON sidecar per session
 - writes one `*.bundle.json` file per session for easy web loading
 - writes one `session-pack.json` file containing all sessions from the ingest batch
+- writes aggregate pack metadata into `session-pack.json` for quick multi-session inspection
 - writes one `index.json` file for quick session listing
 - records dropped invalid-event counts in session summaries and in `index.json`
 
