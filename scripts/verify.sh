@@ -95,10 +95,36 @@ python3 apps/collector/src/collector.py \
   --outdir "$TMP_DIR/openclaw-collector"
 test -f "$TMP_DIR/openclaw-collector/index.json"
 
-echo "[6/7] Check static web syntax"
+echo "[6/7] Check dropped-event demo accounting"
+python3 apps/collector/src/collector.py \
+  --input packages/schema/examples/dropped-events-session.ndjson \
+  --outdir "$TMP_DIR/dropped-collector"
+python3 - "$TMP_DIR/dropped-collector" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+outdir = Path(sys.argv[1])
+summary = json.loads((outdir / "sessions" / "sess_dropped.summary.json").read_text(encoding="utf-8"))
+index = json.loads((outdir / "index.json").read_text(encoding="utf-8"))
+bundle = json.loads((outdir / "bundles" / "sess_dropped.bundle.json").read_text(encoding="utf-8"))
+pack = json.loads((outdir / "bundles" / "session-pack.json").read_text(encoding="utf-8"))
+
+assert summary["event_count"] == 3
+assert summary["dropped_event_count"] == 1
+assert index["dropped_event_count"] == 1
+assert index["dropped_events_by_session"] == [{"session_id": "sess_dropped", "count": 1}]
+assert bundle["summary"]["dropped_event_count"] == 1
+assert pack["summary"]["session_count"] == 1
+assert pack["summary"]["event_count"] == 3
+assert pack["summary"]["dropped_event_count"] == 1
+assert pack["sessions"][0]["summary"]["dropped_event_count"] == 1
+PY
+
+echo "[7/8] Check static web syntax"
 node --check apps/web/app.js
 
-echo "[7/7] Run a local HTTP smoke test"
+echo "[8/8] Run a local HTTP smoke test"
 start_http_server "apps/web"
 curl -fsS "http://127.0.0.1:$SERVER_PORT/" | grep -q "TurnScope"
 

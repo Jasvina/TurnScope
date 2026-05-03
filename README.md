@@ -144,6 +144,16 @@ python3 packages/adapters-codex/src/eval_samples.py
 
 Then load either one generated `apps/collector/data/bundles/*.bundle.json` file or the full `apps/collector/data/bundles/session-pack.json` file into `apps/web`.
 
+To demo dropped invalid-event accounting end to end:
+
+```bash
+python3 apps/collector/src/collector.py \
+  --input packages/schema/examples/dropped-events-session.ndjson \
+  --outdir /tmp/turnscope_dropped_demo
+```
+
+Then load `/tmp/turnscope_dropped_demo/bundles/session-pack.json` into `apps/web` and confirm the catalog plus session stats both show one dropped invalid event.
+
 For current progress and planned optimization work, see [`docs/progress/current-progress.md`](docs/progress/current-progress.md).
 
 For the OpenClaw session-store bootstrap adapter:
