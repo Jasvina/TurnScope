@@ -135,6 +135,7 @@ const eventTypeFilter = document.getElementById('event-type-filter');
 const clearFilters = document.getElementById('clear-filters');
 let loadedSessionEvents = {};
 let loadedSessionSummaries = {};
+let loadedPackSummary = null;
 let currentSessionEvents = [];
 let visibleEvents = [];
 let activeSessionId = null;
@@ -398,11 +399,26 @@ function renderCatalog(indexData) {
     return;
   }
   const sessions = Array.isArray(indexData.sessions) ? indexData.sessions : [indexData];
+  const packSummary = indexData.summary || null;
   const totalDropped = Number(
-    indexData.dropped_event_count ??
+    packSummary?.dropped_event_count ??
+      indexData.dropped_event_count ??
       sessions.reduce((sum, session) => sum + Number(session.dropped_event_count || 0), 0),
   );
-  catalogLabel.textContent = `${countLabel(sessions.length, 'session summary')} · ${countLabel(totalDropped, 'dropped invalid event')}`;
+  const totalEvents = Number(
+    packSummary?.event_count ??
+      sessions.reduce((sum, session) => sum + Number(session.event_count || 0), 0),
+  );
+  const runtimeCount = Array.isArray(packSummary?.runtimes) ? packSummary.runtimes.length : 0;
+  const labelParts = [
+    countLabel(sessions.length, 'session summary'),
+    countLabel(totalEvents, 'event'),
+    countLabel(totalDropped, 'dropped invalid event'),
+  ];
+  if (runtimeCount) {
+    labelParts.push(countLabel(runtimeCount, 'runtime'));
+  }
+  catalogLabel.textContent = labelParts.join(' · ');
   catalogList.innerHTML = sessions
     .map(
       (session, position) => `
@@ -443,6 +459,7 @@ function handleLoadedText(text) {
   if (trimmed.startsWith('{')) {
     const parsed = JSON.parse(trimmed);
     if (parsed.kind === 'turnscope.session.pack' && Array.isArray(parsed.sessions)) {
+      loadedPackSummary = parsed.summary || null;
       loadedSessionEvents = Object.fromEntries(
         parsed.sessions.map((session) => [session.summary.session_id, session.events]),
       );
@@ -450,13 +467,17 @@ function handleLoadedText(text) {
         parsed.sessions.map((session) => [session.summary.session_id, session.summary]),
       );
       activeSessionId = parsed.sessions[0]?.summary?.session_id || null;
-      renderCatalog({ sessions: parsed.sessions.map((session) => session.summary) });
+      renderCatalog({
+        summary: loadedPackSummary,
+        sessions: parsed.sessions.map((session) => session.summary),
+      });
       if (activeSessionId) {
         renderEvents(loadedSessionEvents[activeSessionId], parsed.sessions[0].summary);
       }
       return;
     }
     if (parsed.kind === 'turnscope.session.bundle' && parsed.summary && Array.isArray(parsed.events)) {
+      loadedPackSummary = null;
       loadedSessionEvents = { [parsed.summary.session_id]: parsed.events };
       loadedSessionSummaries = { [parsed.summary.session_id]: parsed.summary };
       activeSessionId = parsed.summary.session_id;
@@ -465,6 +486,7 @@ function handleLoadedText(text) {
       return;
     }
     if (Array.isArray(parsed.sessions) || parsed.session_id) {
+      loadedPackSummary = null;
       loadedSessionEvents = {};
       loadedSessionSummaries = Array.isArray(parsed.sessions)
         ? Object.fromEntries(parsed.sessions.map((session) => [session.session_id, session]))
@@ -475,6 +497,7 @@ function handleLoadedText(text) {
       return;
     }
   }
+  loadedPackSummary = null;
   loadedSessionEvents = {};
   loadedSessionSummaries = {};
   activeSessionId = null;
@@ -484,6 +507,7 @@ function handleLoadedText(text) {
 
 document.getElementById('load-sample').addEventListener('click', () => {
   input.value = toNdjson(sampleEvents);
+  loadedPackSummary = null;
   loadedSessionEvents = { sess_demo: sampleEvents };
   loadedSessionSummaries = {
     sess_demo: {
@@ -575,6 +599,7 @@ clearFilters.addEventListener('click', () => {
 });
 
 input.value = toNdjson(sampleEvents);
+loadedPackSummary = null;
 loadedSessionEvents = { sess_demo: sampleEvents };
 loadedSessionSummaries = {
   sess_demo: {
