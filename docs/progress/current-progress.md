@@ -113,6 +113,7 @@ Current collector capabilities:
 - reads NDJSON or JSON-array event input
 - validates required fields
 - drops invalid events while continuing the ingest batch
+- supports repeated ingest via `--append`
 - groups events by `session_id`
 - writes per-session event logs
 - writes per-session summary files
@@ -247,7 +248,6 @@ Not complete yet:
 
 - add schema validation mode
 - add redaction profiles before sharing bundles
-- support append mode across repeated ingest runs
 - support multi-session pack metadata and pack summaries
 
 ### 3. Web inspection

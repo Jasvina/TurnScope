@@ -58,6 +58,10 @@ def load_events(path: Path) -> List[Dict[str, Any]]:
     return events
 
 
+def load_json_file(path: Path) -> Dict[str, Any]:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def validate_event(event: Dict[str, Any]) -> Iterable[str]:
     for field in REQUIRED_FIELDS:
         if field not in event:
@@ -65,6 +69,36 @@ def validate_event(event: Dict[str, Any]) -> Iterable[str]:
     source = event.get("source")
     if source is not None and not isinstance(source, dict):
         yield "source must be an object"
+
+
+def group_events(events: List[Dict[str, Any]]) -> Dict[str, List[Dict[str, Any]]]:
+    grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for event in events:
+        grouped[event["session_id"]].append(event)
+    return grouped
+
+
+def load_existing_dropped_counts(outdir: Path) -> Counter[Optional[str]]:
+    index_path = outdir / "index.json"
+    if not index_path.exists():
+        return Counter()
+
+    payload = load_json_file(index_path)
+    counts: Counter[Optional[str]] = Counter()
+    for entry in payload.get("dropped_events_by_session", []):
+        counts[entry.get("session_id")] += int(entry.get("count", 0))
+    return counts
+
+
+def load_existing_session_groups(outdir: Path) -> Dict[str, List[Dict[str, Any]]]:
+    sessions_dir = outdir / "sessions"
+    if not sessions_dir.exists():
+        return {}
+
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for log_path in sorted(sessions_dir.glob("*.ndjson")):
+        grouped[log_path.stem] = load_events(log_path)
+    return grouped
 
 
 def dropped_event_entries(counts: Counter[Optional[str]]) -> List[Dict[str, Any]]:
@@ -167,14 +201,10 @@ def write_pack(outdir: Path, sessions: List[Dict[str, Any]]) -> Path:
 
 
 def write_sessions(
-    events: List[Dict[str, Any]],
+    session_groups: Dict[str, List[Dict[str, Any]]],
     outdir: Path,
     dropped_counts: Optional[Counter[Optional[str]]] = None,
 ) -> List[Path]:
-    grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-    for event in events:
-        grouped[event["session_id"]].append(event)
-
     sessions_dir = outdir / "sessions"
     sessions_dir.mkdir(parents=True, exist_ok=True)
     written = []
@@ -182,7 +212,8 @@ def write_sessions(
     packs = []
     dropped_counts = dropped_counts or Counter()
 
-    for session_id, session_events in grouped.items():
+    for session_id in sorted(session_groups):
+        session_events = session_groups[session_id]
         session_events.sort(key=event_sort_key)
         log_path = sessions_dir / f"{session_id}.ndjson"
         summary_path = sessions_dir / f"{session_id}.summary.json"
@@ -214,6 +245,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Collect TurnScope events into local session files")
     parser.add_argument("--input", required=True, help="Path to NDJSON or JSON events")
     parser.add_argument("--outdir", default="apps/collector/data", help="Output directory for stored sessions")
+    parser.add_argument(
+        "--append",
+        action="store_true",
+        help="Merge new events into the existing outdir instead of replacing its session state",
+    )
     args = parser.parse_args()
 
     input_path = Path(args.input)
@@ -235,10 +271,19 @@ def main() -> int:
             continue
         valid_events.append(event)
 
-    written = write_sessions(valid_events, outdir, dropped_counts)
+    session_groups = group_events(valid_events)
+    if args.append:
+        existing_groups = load_existing_session_groups(outdir)
+        for session_id, existing_events in existing_groups.items():
+            session_groups.setdefault(session_id, []).extend(existing_events)
+        dropped_counts.update(load_existing_dropped_counts(outdir))
+
+    written = write_sessions(session_groups, outdir, dropped_counts)
 
     print(f"Loaded {len(events)} events from {input_path}")
     print(f"Stored {len(valid_events)} valid events")
+    if args.append:
+        print(f"Append mode merged into {outdir}")
     if errors:
         print(f"Dropped {len(errors)} invalid events")
         for error in errors:
